@@ -16,6 +16,7 @@ A structured laboratory repository containing practical experiments, relational 
 | **02** | *Experiment 2* | — | ⏳ Upcoming |
 | **03** | **Employee–Department–Project Schema** | [`📁 Experiment-3`](./Experiment-3) | ✅ Completed |
 | **04** | **Advanced SQL Queries & Execution Plans** | [`📁 Experiment-4`](./Experiment-4) | ✅ Completed |
+| **05** | **SQL Views, View Updatability & Recursive CTE** | [`📁 Experiment-5`](./Experiment-5) | ✅ Completed |
 
 ---
 
@@ -30,10 +31,15 @@ DBMS-Practical-File-/
 │   ├── data.sql                # Dataset insertion (5 depts, 30 employees, 8 projects)
 │   ├── queries.sql             # 18 Categorized SQL queries (A to G)
 │   └── database_complete.sql   # Unified all-in-one executable script
-└── Experiment-4/               # Experiment 4: Advanced SQL Queries & EXPLAIN Plans
-    ├── advanced_queries.sql    # 8 Advanced queries (Joins, Subqueries, Sets)
-    ├── explain_plans.sql       # EXPLAIN execution plan analysis
-    └── complete_experiment4.sql# Unified executable script for Experiment 4
+├── Experiment-4/               # Experiment 4: Advanced SQL Queries & EXPLAIN Plans
+│   ├── advanced_queries.sql    # 8 Advanced queries (Joins, Subqueries, Sets)
+│   ├── explain_plans.sql       # EXPLAIN execution plan analysis
+│   └── complete_experiment4.sql# Unified executable script for Experiment 4
+└── Experiment-5/               # Experiment 5: SQL Views & Recursive CTE
+    ├── schema_update.sql       # Hierarchy alteration & manager assignments
+    ├── views_and_updatability.sql # Views creation & updatability tests
+    ├── recursive_cte.sql       # Hierarchical recursive CTE queries
+    └── complete_experiment5.sql# Unified executable script for Experiment 5
 ```
 
 ---
@@ -781,3 +787,274 @@ WHERE EXISTS (
 ## 📈 Experiment 4 Results & Conclusion
 
 The **Employee–Department–Project** database was successfully queried using `INNER JOIN`, `LEFT JOIN`, `SELF JOIN`, multi-table joins, correlated subqueries, `EXISTS`, and simulated `INTERSECT` and `EXCEPT` operations. Execution plans for selected queries were examined using `EXPLAIN` and their access methods, join types, row estimates, and optimizer characteristics were evaluated for performance analysis.
+
+---
+
+# 🔬 Experiment 5: SQL Views, View Updatability and Recursive CTE
+
+[![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Database](https://img.shields.io/badge/Database-CompanyDB-005C84?style=for-the-badge&logo=databricks&logoColor=white)](https://github.com/)
+
+---
+
+## 📌 Aim & Objectives
+
+To design and implement SQL views for department salary aggregation and employee organizational hierarchy, investigate the rules governing view updatability in MySQL, and implement recursive Common Table Expressions (CTE) to traverse hierarchical employee-manager reporting chains.
+
+---
+
+## 📖 Theory & Core Concepts
+
+1. **SQL View:** A virtual table defined by a stored `SELECT` query. Views simplify complex query execution, provide data abstraction, and enable column-level security.
+2. **View Updatability:**
+   - **Updatable Views:** A simple, 1-to-1 projection on a single underlying base table is updatable (inserts/updates/deletes propagate directly to the base table).
+   - **Non-Updatable Views:** Views containing `GROUP BY`, aggregate functions (`SUM`, `AVG`, `COUNT`), `DISTINCT`, `HAVING`, or `UNION` are **not updatable** because each row represents grouped summaries rather than a unique underlying base-table row (MySQL returns `ERROR 1288 (HY000)`).
+   - **Join Views:** Updating columns derived from multiple joined tables is restricted or rejected if the target column belongs to an un-updatable join partner.
+3. **Recursive Common Table Expressions (CTE):**
+   - Defined using `WITH RECURSIVE`.
+   - Contains an **Anchor Member** (initial non-recursive seed query, e.g. finding top-level managers with `Manager_ID IS NULL`).
+   - Followed by `UNION ALL` and a **Recursive Member** (references the CTE itself to fetch the next hierarchical level).
+   - Terminates automatically when the recursive step returns an empty set.
+
+---
+
+## 📁 Experiment 5 Files
+
+```tree
+Experiment-5/
+├── schema_update.sql          # Self-referencing Foreign Key & reporting relationships
+├── views_and_updatability.sql # View creation, updatability tests & definition checks
+├── recursive_cte.sql          # Recursive CTE reporting chains & indented trees
+└── complete_experiment5.sql   # Unified executable script for Experiment 5
+```
+
+---
+
+## 🚀 Getting Started / Execution Guide (Experiment 5)
+
+Make sure `CompanyDB` is initialized.
+
+```sql
+USE CompanyDB;
+SOURCE Experiment-5/complete_experiment5.sql;
+```
+
+*Or execute components modularly:*
+```sql
+SOURCE Experiment-5/schema_update.sql;
+SOURCE Experiment-5/views_and_updatability.sql;
+SOURCE Experiment-5/recursive_cte.sql;
+```
+
+---
+
+## 🛠️ Step 1: Extend Schema for Reporting Hierarchy
+
+Add a self-referencing foreign key column `Manager_ID` to `Employee` and assign reporting managers across all 5 departments:
+
+```sql
+ALTER TABLE Employee
+ADD COLUMN Manager_ID INT NULL;
+
+ALTER TABLE Employee
+ADD CONSTRAINT fk_employee_manager
+FOREIGN KEY (Manager_ID) REFERENCES Employee(Emp_ID);
+```
+
+---
+
+## 📊 Views & Updatability Experiments
+
+### 1. Department Salary Summary View (Aggregate View)
+Summarizes department budgets, headcounts, average, min, and max salaries:
+
+```sql
+CREATE OR REPLACE VIEW Department_Salary_Summary AS 
+SELECT d.Dept_ID,
+       d.Dept_Name,
+       COUNT(e.Emp_ID) AS Employee_Count, 
+       SUM(e.Salary) AS Total_Salary, 
+       AVG(e.Salary) AS Average_Salary, 
+       MIN(e.Salary) AS Minimum_Salary, 
+       MAX(e.Salary) AS Maximum_Salary
+FROM Department d
+LEFT JOIN Employee e ON d.Dept_ID = e.Dept_ID 
+GROUP BY d.Dept_ID, d.Dept_Name;
+
+SELECT * FROM Department_Salary_Summary;
+```
+
+**Output:**
+```
++---------+-------------------------+----------------+--------------+----------------+----------------+----------------+
+| Dept_ID | Dept_Name               | Employee_Count | Total_Salary | Average_Salary | Minimum_Salary | Maximum_Salary |
++---------+-------------------------+----------------+--------------+----------------+----------------+----------------+
+|       1 | Artificial Intelligence |              6 |    520000.00 |   86666.666667 |       72000.00 |      105000.00 |
+|       2 | Software Development    |              6 |    465000.00 |   77500.000000 |       65000.00 |       95000.00 |
+|       3 | Cyber Security          |              6 |    516000.00 |   86000.000000 |       68000.00 |       98000.00 |
+|       4 | Data Science            |              6 |    506000.00 |   84333.333333 |       72000.00 |      100000.00 |
+|       5 | Human Resources         |              6 |    403000.00 |   67166.666667 |       58000.00 |       85000.00 |
++---------+-------------------------+----------------+--------------+----------------+----------------+----------------+
+```
+
+---
+
+### 2. Employee Hierarchy View (Multi-Table Join View)
+Combines employee details with department name and manager's name:
+
+```sql
+CREATE OR REPLACE VIEW Employee_Hierarchy AS 
+SELECT e.Emp_ID,
+       e.Emp_Name AS Employee_Name, 
+       e.Job_Title,
+       e.Dept_ID, 
+       d.Dept_Name, 
+       e.Manager_ID,
+       m.Emp_Name AS Manager_Name
+FROM Employee e
+LEFT JOIN Department d ON e.Dept_ID = d.Dept_ID 
+LEFT JOIN Employee m ON e.Manager_ID = m.Emp_ID;
+
+SELECT *
+FROM Employee_Hierarchy
+ORDER BY Dept_ID, Manager_ID, Emp_ID;
+```
+
+**Output:**
+```
++--------+---------------+----------------------+---------+-------------------------+------------+--------------+
+| Emp_ID | Employee_Name | Job_Title            | Dept_ID | Dept_Name               | Manager_ID | Manager_Name |
++--------+---------------+----------------------+---------+-------------------------+------------+--------------+
+|    101 | Aarav Sharma  | AI Engineer          |       1 | Artificial Intelligence |       NULL | NULL         |
+|    102 | Priya Verma   | ML Engineer          |       1 | Artificial Intelligence |        101 | Aarav Sharma |
+|    103 | Rohan Gupta   | AI Developer         |       1 | Artificial Intelligence |        101 | Aarav Sharma |
+|    104 | Ananya Singh  | Research Engineer    |       1 | Artificial Intelligence |        102 | Priya Verma  |
+|    105 | Karan Mehta   | ML Engineer          |       1 | Artificial Intelligence |        102 | Priya Verma  |
+|    106 | Neha Kapoor   | AI Analyst           |       1 | Artificial Intelligence |        103 | Rohan Gupta  |
+|    110 | Simran Kaur   | Full Stack Developer |       2 | Software Development    |       NULL | NULL         |
+|    107 | Rahul Kumar   | Software Engineer    |       2 | Software Development    |        110 | Simran Kaur  |
+|    ... | ...           | ...                  |     ... | ...                     |        ... | ...          |
++--------+---------------+----------------------+---------+-------------------------+------------+--------------+
+```
+
+---
+
+### 3. View Updatability Tests & Observations
+
+#### A. Updatable Simple View (`Employee_Basic`)
+```sql
+CREATE OR REPLACE VIEW Employee_Basic AS
+SELECT Emp_ID, Emp_Name, Job_Title, Salary, Dept_ID 
+FROM Employee;
+
+UPDATE Employee_Basic 
+SET Salary = 86000 
+WHERE Emp_ID = 101;
+
+SELECT Emp_ID, Emp_Name, Salary FROM Employee WHERE Emp_ID = 101;
+```
+- **Result:** **Success!** Salary is updated in the base `Employee` table.
+
+#### B. Non-Updatable Aggregate View (`Department_Salary_Summary`)
+```sql
+UPDATE Department_Salary_Summary 
+SET Average_Salary = 90000 
+WHERE Dept_ID = 1;
+```
+- **Result:** **REJECTED!**
+- **Error:** `ERROR 1288 (HY000): The target table Department_Salary_Summary of the UPDATE is not updatable`
+
+#### C. Non-Updatable Multi-Table Join View (`Employee_Hierarchy`)
+```sql
+UPDATE Employee_Hierarchy
+SET Manager_Name = 'Priya Verma' 
+WHERE Emp_ID = 103;
+```
+- **Result:** **REJECTED!** `Manager_Name` is derived from a joined table (`m`).
+
+---
+
+### 📋 View Updatability Comparison Matrix
+
+| View Name | Main Characteristics | Directly Updatable? | Reason / DBMS Rule |
+| :--- | :--- | :---: | :--- |
+| **`Employee_Basic`** | Single base table projection | **Yes** | 1:1 mapping directly updates underlying table row. |
+| **`Department_Salary_Summary`**| `GROUP BY` + Aggregate functions | **No** | Rows represent grouped summary data, not single base rows. |
+| **`Employee_Hierarchy`** | Multi-table `JOIN` with aliases | **No** | Target column `Manager_Name` is derived from joined relation. |
+
+---
+
+## 🌲 Recursive Common Table Expressions (CTE)
+
+### 1. Full Reporting Chains with Paths
+```sql
+WITH RECURSIVE EmployeeChain AS ( 
+    SELECT e.Emp_ID, e.Emp_Name, e.Manager_ID, 0 AS Level,
+           CAST(e.Emp_Name AS CHAR(1000)) AS Reporting_Chain 
+    FROM Employee e
+    WHERE e.Manager_ID IS NULL
+    UNION ALL
+    SELECT e.Emp_ID, e.Emp_Name, e.Manager_ID, ec.Level + 1,
+           CONCAT(ec.Reporting_Chain, ' -> ', e.Emp_Name) 
+    FROM Employee e
+    INNER JOIN EmployeeChain ec ON e.Manager_ID = ec.Emp_ID
+)
+SELECT Emp_ID, Emp_Name, Manager_ID, Level, Reporting_Chain 
+FROM EmployeeChain
+ORDER BY Reporting_Chain;
+```
+
+---
+
+### 2. Recursive CTE for a Single Subtree (Root = Emp_ID 101)
+```sql
+WITH RECURSIVE ReportingTree AS (
+    SELECT Emp_ID, Emp_Name, Manager_ID, 0 AS Level 
+    FROM Employee
+    WHERE Emp_ID = 101 
+    UNION ALL
+    SELECT e.Emp_ID, e.Emp_Name, e.Manager_ID, rt.Level + 1 
+    FROM Employee e
+    INNER JOIN ReportingTree rt ON e.Manager_ID = rt.Emp_ID
+)
+SELECT Emp_ID, Emp_Name, Manager_ID, Level 
+FROM ReportingTree
+ORDER BY Level, Emp_ID;
+```
+
+---
+
+### 3. Visual Indentation Organizational Tree
+```sql
+WITH RECURSIVE EmployeeTree AS (
+    SELECT Emp_ID, Emp_Name, Manager_ID, 0 AS Level 
+    FROM Employee
+    WHERE Manager_ID IS NULL 
+    UNION ALL
+    SELECT e.Emp_ID, e.Emp_Name, e.Manager_ID, et.Level + 1 
+    FROM Employee e
+    INNER JOIN EmployeeTree et ON e.Manager_ID = et.Emp_ID
+)
+SELECT Emp_ID,
+       CONCAT(REPEAT('    ', Level), Emp_Name) AS Employee_Hierarchy, 
+       Level
+FROM EmployeeTree
+ORDER BY Level, Emp_ID;
+```
+
+---
+
+## 💡 Important Observations
+
+- A view stores a stored query definition rather than duplicating underlying storage.
+- Aggregate and `GROUP BY` views produce synthesized rows and cannot be updated directly.
+- A simple single-table projection allows update propagation when meeting DBMS integrity criteria.
+- Recursive CTEs cleanly solve the hierarchical traversal problem in relational databases without requiring procedural cursor loops.
+- `Manager_ID` implements a self-referencing unary relationship model.
+
+---
+
+## 📈 Experiment 5 Results & Conclusion
+
+SQL views for departmental salary aggregation and multi-table employee hierarchy were successfully defined and evaluated. View updatability rules were validated: simple projections permitted updates, whereas aggregate and joined views were properly rejected with `ERROR 1288`. Recursive Common Table Expressions (`WITH RECURSIVE`) efficiently computed organizational reporting paths and rendered indented hierarchy trees across all organizational levels.
+
