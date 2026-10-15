@@ -1,10 +1,42 @@
-# DBMS Lab – Experiment 3: Employee–Department–Project Schema
+# DBMS Practical File
 
 [![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![Database](https://img.shields.io/badge/Database-CompanyDB-005C84?style=for-the-badge&logo=databricks&logoColor=white)](https://github.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
-A complete relational database implementation and SQL query suite based on the **Employee–Department–Project** schema. This repository contains end-to-end SQL scripts covering database design, relational integrity constraints (Primary Keys & Foreign Keys), multi-table insertions, and advanced SQL querying.
+A structured laboratory repository containing practical experiments, relational schema designs, datasets, and SQL query suites for **Database Management Systems (DBMS) Lab**.
+
+---
+
+## 📑 Index of Practical Experiments
+
+| Exp No. | Experiment Title | Folder / Code | Status |
+| :---: | :--- | :---: | :---: |
+| **01** | *Experiment 1* | — | ⏳ Upcoming |
+| **02** | *Experiment 2* | — | ⏳ Upcoming |
+| **03** | **Employee–Department–Project Schema** | [`📁 Experiment-3`](./Experiment-3) | ✅ Completed |
+| **04** | *Experiment 4* | — | ⏳ Upcoming |
+
+---
+
+## 📁 Repository Structure
+
+```tree
+DBMS-Practical-File-/
+├── README.md                   # Master practical documentation & experiment index
+├── .gitignore
+└── Experiment-3/               # Experiment 3: Employee-Department-Project
+    ├── schema.sql              # Database creation and table definitions
+    ├── data.sql                # Dataset insertion (5 depts, 30 employees, 8 projects)
+    ├── queries.sql             # 18 Categorized SQL queries (A to G)
+    └── database_complete.sql   # Unified all-in-one executable script
+```
+
+---
+
+# 🔬 Experiment 3: Employee–Department–Project Schema
+
+A complete relational database implementation and SQL query suite based on the **Employee–Department–Project** schema. This module contains end-to-end SQL scripts covering database design, relational integrity constraints (Primary Keys & Foreign Keys), multi-table insertions, and advanced SQL querying.
 
 ---
 
@@ -60,37 +92,24 @@ The database `CompanyDB` models organizational entities and their operational as
 
 ---
 
-## 📁 Repository Structure
-
-```tree
-dbms-employee-department-project/
-├── README.md               # Comprehensive documentation and lab report
-├── schema.sql              # Database creation and table definitions
-├── data.sql                # Complete mock dataset insertion (30 employees, 8 projects, etc.)
-├── queries.sql             # All 18 categorized SQL queries
-└── database_complete.sql   # Unified all-in-one executable script
-```
-
----
-
-## 🚀 Getting Started / Execution Guide
+## 🚀 Getting Started / Execution Guide (Experiment 3)
 
 ### Method 1: Using MySQL Command Line Client
 
-1. Open your terminal or command prompt.
+1. Open your terminal or command prompt inside the repository folder.
 2. Log into MySQL:
    ```bash
    mysql -u root -p
    ```
 3. Run the unified SQL script:
    ```sql
-   SOURCE path/to/database_complete.sql;
+   SOURCE Experiment-3/database_complete.sql;
    ```
    *Or run modularly:*
    ```sql
-   SOURCE path/to/schema.sql;
-   SOURCE path/to/data.sql;
-   SOURCE path/to/queries.sql;
+   SOURCE Experiment-3/schema.sql;
+   SOURCE Experiment-3/data.sql;
+   SOURCE Experiment-3/queries.sql;
    ```
 
 ### Method 2: Using MySQL Workbench
