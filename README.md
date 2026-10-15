@@ -15,7 +15,7 @@ A structured laboratory repository containing practical experiments, relational 
 | **01** | *Experiment 1* | — | ⏳ Upcoming |
 | **02** | *Experiment 2* | — | ⏳ Upcoming |
 | **03** | **Employee–Department–Project Schema** | [`📁 Experiment-3`](./Experiment-3) | ✅ Completed |
-| **04** | *Experiment 4* | — | ⏳ Upcoming |
+| **04** | **Advanced SQL Queries & Execution Plans** | [`📁 Experiment-4`](./Experiment-4) | ✅ Completed |
 
 ---
 
@@ -25,11 +25,15 @@ A structured laboratory repository containing practical experiments, relational 
 DBMS-Practical-File-/
 ├── README.md                   # Master practical documentation & experiment index
 ├── .gitignore
-└── Experiment-3/               # Experiment 3: Employee-Department-Project
-    ├── schema.sql              # Database creation and table definitions
-    ├── data.sql                # Dataset insertion (5 depts, 30 employees, 8 projects)
-    ├── queries.sql             # 18 Categorized SQL queries (A to G)
-    └── database_complete.sql   # Unified all-in-one executable script
+├── Experiment-3/               # Experiment 3: Employee-Department-Project Schema
+│   ├── schema.sql              # Database creation and table definitions
+│   ├── data.sql                # Dataset insertion (5 depts, 30 employees, 8 projects)
+│   ├── queries.sql             # 18 Categorized SQL queries (A to G)
+│   └── database_complete.sql   # Unified all-in-one executable script
+└── Experiment-4/               # Experiment 4: Advanced SQL Queries & EXPLAIN Plans
+    ├── advanced_queries.sql    # 8 Advanced queries (Joins, Subqueries, Sets)
+    ├── explain_plans.sql       # EXPLAIN execution plan analysis
+    └── complete_experiment4.sql# Unified executable script for Experiment 4
 ```
 
 ---
@@ -361,6 +365,419 @@ ORDER BY Dept_ID ASC, Salary DESC;
 
 ---
 
-## 📈 Experiment Results & Conclusion
+## 📈 Experiment 3 Results & Conclusion
 
 The **Employee–Department–Project** database schema was successfully modeled, populated, and evaluated. All primary key and foreign key constraints preserved referential integrity across the 30 employees, 5 departments, and 8 projects. All 18 queries demonstrating Selection, Projection, Aggregation (`AVG`, `MAX`, `MIN`, `SUM`, `COUNT`), `GROUP BY`, `HAVING`, `CASE` conditional logic, and `ORDER BY` executed accurately with valid results.
+
+---
+
+# 🔬 Experiment 4: Advanced SQL Queries and Execution Plans
+
+[![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Database](https://img.shields.io/badge/Database-CompanyDB-005C84?style=for-the-badge&logo=databricks&logoColor=white)](https://github.com/)
+
+---
+
+## 📌 Aim & Objectives
+
+To perform advanced SQL queries on the **Employee–Department–Project** database (`CompanyDB`) using:
+- **INNER JOIN**, **LEFT JOIN**, and **SELF JOIN**
+- **Multi-Table / 4-Way Joins** via junction bridge tables
+- **Correlated Subqueries**
+- **EXISTS** conditional tests
+- **Simulated Set Operations** (`INTERSECT` and `EXCEPT`)
+- Query performance evaluation and execution plan analysis using **`EXPLAIN`**
+
+---
+
+## 📖 Theory & Core Concepts
+
+1. **INNER JOIN:** Returns only records having matching values in both joined tables.
+2. **LEFT JOIN:** Preserves all rows from the left table, returning `NULL` for unmatched right-table columns.
+3. **SELF JOIN:** Joins a table to itself to compare records within the same dataset (e.g. finding departmental peers while using inequality `e1.Emp_ID < e2.Emp_ID` to prevent duplicate reciprocal pairs).
+4. **Multi-Table Joins:** Connects multiple entities across a many-to-many junction (`Employee` ↔ `Employee_Project` ↔ `Project` + `Department`).
+5. **Correlated Subqueries:** Subqueries that reference columns from the outer query, evaluated dynamically row-by-row.
+6. **EXISTS Operator:** Boolean test that evaluates to `TRUE` as soon as at least one matching row is found in the subquery (enabling early exit short-circuiting).
+7. **Simulated Set Operations:**
+   - **INTERSECT:** Simulated via an `INNER JOIN` between two filtered derived subqueries.
+   - **EXCEPT / MINUS:** Simulated via `NOT EXISTS` to exclude rows belonging to an unwanted subset.
+8. **EXPLAIN Execution Plan:** Displays the MySQL Optimizer's chosen physical query plan, including scan types (`ALL`, `ref`, `eq_ref`), evaluated keys/indexes, row estimations, and optimizer notes.
+
+---
+
+## 📁 Experiment 4 Files
+
+```tree
+Experiment-4/
+├── advanced_queries.sql    # 8 Advanced SQL queries (Joins, Subqueries, Sets)
+├── explain_plans.sql       # 4 Query execution plan analysis scripts
+└── complete_experiment4.sql# Unified script running all queries and EXPLAIN statements
+```
+
+---
+
+## 🚀 Getting Started / Execution Guide (Experiment 4)
+
+Make sure the `CompanyDB` database from Experiment 3 is already created and populated.
+
+```sql
+USE CompanyDB;
+SOURCE Experiment-4/complete_experiment4.sql;
+```
+
+*Or execute components individually:*
+```sql
+SOURCE Experiment-4/advanced_queries.sql;
+SOURCE Experiment-4/explain_plans.sql;
+```
+
+---
+
+## 📊 Advanced SQL Queries & Output Catalog
+
+### 1. INNER JOIN
+Display employees along with the departments to which they belong. Returns only matching rows.
+
+```sql
+SELECT e.Emp_ID,
+       e.Emp_Name, 
+       e.Job_Title, 
+       d.Dept_Name
+FROM Employee e
+INNER JOIN Department d 
+ON e.Dept_ID = d.Dept_ID;
+```
+
+**Output:**
+```
++--------+---------------+------------------------+-------------------------+
+| Emp_ID | Emp_Name      | Job_Title              | Dept_Name               |
++--------+---------------+------------------------+-------------------------+
+|    101 | Aarav Sharma  | AI Engineer            | Artificial Intelligence |
+|    102 | Priya Verma   | ML Engineer            | Artificial Intelligence |
+|    103 | Rohan Gupta   | AI Developer           | Artificial Intelligence |
+|    104 | Ananya Singh  | Research Engineer      | Artificial Intelligence |
+|    105 | Karan Mehta   | ML Engineer            | Artificial Intelligence |
+|    106 | Neha Kapoor   | AI Analyst             | Artificial Intelligence |
+|    107 | Rahul Kumar   | Software Engineer      | Software Development    |
+|    108 | Sneha Patel   | Backend Developer      | Software Development    |
+|    109 | Aditya Jain   | Frontend Developer     | Software Development    |
+|    110 | Simran Kaur   | Full Stack Developer   | Software Development    |
+|    111 | Vivek Mishra  | Software Engineer      | Software Development    |
+|    112 | Ishita Rao    | QA Engineer            | Software Development    |
+|    113 | Arjun Malhotra| Security Engineer      | Cyber Security          |
+|    114 | Megha Joshi   | Cyber Security Analyst | Cyber Security          |
+|    115 | Yash Thakur   | Security Consultant    | Cyber Security          |
+|    116 | Pooja Nair    | SOC Analyst            | Cyber Security          |
++--------+---------------+------------------------+-------------------------+
+```
+
+---
+
+### 2. LEFT JOIN
+Display all departments and their employees, including departments with no matching employee.
+
+```sql
+SELECT d.Dept_ID,
+       d.Dept_Name, 
+       e.Emp_Name
+FROM Department d 
+LEFT JOIN Employee e
+ON d.Dept_ID = e.Dept_ID;
+```
+
+**Output:**
+```
++---------+-------------------------+---------------+
+| Dept_ID | Dept_Name               | Emp_Name      |
++---------+-------------------------+---------------+
+|       1 | Artificial Intelligence | Aarav Sharma  |
+|       1 | Artificial Intelligence | Priya Verma   |
+|       1 | Artificial Intelligence | Rohan Gupta   |
+|       1 | Artificial Intelligence | Ananya Singh  |
+|       1 | Artificial Intelligence | Karan Mehta   |
+|       1 | Artificial Intelligence | Neha Kapoor   |
+|       2 | Software Development    | Rahul Kumar   |
+|       2 | Software Development    | Sneha Patel   |
+|       2 | Software Development    | Aditya Jain   |
+|       2 | Software Development    | Simran Kaur   |
+|       2 | Software Development    | Vivek Mishra  |
+|       2 | Software Development    | Ishita Rao    |
+|       3 | Cyber Security          | Arjun Malhotra|
+|       3 | Cyber Security          | Megha Joshi   |
+|       3 | Cyber Security          | Yash Thakur   |
+|       3 | Cyber Security          | Pooja Nair    |
++---------+-------------------------+---------------+
+```
+
+---
+
+### 3. SELF JOIN
+Find pairs of employees who work in the same department. Inequality `e1.Emp_ID < e2.Emp_ID` prevents duplicate pairs.
+
+```sql
+SELECT e1.Emp_Name AS Employee_1, 
+       e2.Emp_Name AS Employee_2, 
+       e1.Dept_ID
+FROM Employee e1 
+INNER JOIN Employee e2
+ON e1.Dept_ID = e2.Dept_ID 
+AND e1.Emp_ID < e2.Emp_ID;
+```
+
+**Output:**
+```
++---------------+---------------+---------+
+| Employee_1    | Employee_2    | Dept_ID |
++---------------+---------------+---------+
+| Aarav Sharma  | Priya Verma   |       1 |
+| Aarav Sharma  | Rohan Gupta   |       1 |
+| Aarav Sharma  | Ananya Singh  |       1 |
+| Aarav Sharma  | Karan Mehta   |       1 |
+| Aarav Sharma  | Neha Kapoor   |       1 |
+| Priya Verma   | Rohan Gupta   |       1 |
+| Priya Verma   | Ananya Singh  |       1 |
+| Priya Verma   | Karan Mehta   |       1 |
+| Priya Verma   | Neha Kapoor   |       1 |
+| Rohan Gupta   | Ananya Singh  |       1 |
+| Rohan Gupta   | Karan Mehta   |       1 |
+| Rohan Gupta   | Neha Kapoor   |       1 |
+| Ananya Singh  | Karan Mehta   |       1 |
+| Ananya Singh  | Neha Kapoor   |       1 |
+| Karan Mehta   | Neha Kapoor   |       1 |
+| Rahul Kumar   | Sneha Patel   |       2 |
++---------------+---------------+---------+
+```
+
+---
+
+### 4. Multi-Table / 4-Way Join
+Display employee name, department name, and project name by traversing the bridge table `Employee_Project`.
+
+```sql
+SELECT e.Emp_Name,
+       d.Dept_Name, 
+       p.Project_Name
+FROM Employee e
+INNER JOIN Department d 
+ON e.Dept_ID = d.Dept_ID
+INNER JOIN Employee_Project ep 
+ON e.Emp_ID = ep.Emp_ID
+INNER JOIN Project p
+ON ep.Project_ID = p.Project_ID;
+```
+
+**Output:**
+```
++---------------+-------------------------+----------------------------+
+| Emp_Name      | Dept_Name               | Project_Name               |
++---------------+-------------------------+----------------------------+
+| Aarav Sharma  | Artificial Intelligence | AI Recommendation System   |
+| Priya Verma   | Artificial Intelligence | AI Recommendation System   |
+| Ananya Singh  | Artificial Intelligence | AI Recommendation System   |
+| Rohan Gupta   | Artificial Intelligence | Computer Vision Platform   |
+| Karan Mehta   | Artificial Intelligence | Computer Vision Platform   |
+| Neha Kapoor   | Artificial Intelligence | Computer Vision Platform   |
+| Rahul Kumar   | Software Development    | E-Commerce Platform        |
+| Sneha Patel   | Software Development    | E-Commerce Platform        |
+| Simran Kaur   | Software Development    | E-Commerce Platform        |
+| Aditya Jain   | Software Development    | Mobile Banking Application |
+| Vivek Mishra  | Software Development    | Mobile Banking Application |
+| Ishita Rao    | Software Development    | Mobile Banking Application |
+| Arjun Malhotra| Cyber Security          | Cyber Threat Detection     |
+| Megha Joshi   | Cyber Security          | Cyber Threat Detection     |
+| Dev Patel     | Cyber Security          | Cyber Threat Detection     |
+| Yash Thakur   | Cyber Security          | Security Monitoring System |
+| Pooja Nair    | Cyber Security          | Security Monitoring System |
++---------------+-------------------------+----------------------------+
+```
+
+---
+
+### 5. Correlated Subquery
+Find employees whose salary is greater than the average salary of their own department.
+
+```sql
+SELECT e.Emp_ID,
+       e.Emp_Name, 
+       e.Salary, 
+       e.Dept_ID
+FROM Employee e 
+WHERE e.Salary > (
+    SELECT AVG(e2.Salary) 
+    FROM Employee e2
+    WHERE e2.Dept_ID = e.Dept_ID
+);
+```
+
+**Output:**
+```
++--------+---------------+-----------+---------+
+| Emp_ID | Emp_Name      |    Salary | Dept_ID |
++--------+---------------+-----------+---------+
+|    102 | Priya Verma   |  92000.00 |       1 |
+|    104 | Ananya Singh  | 105000.00 |       1 |
+|    105 | Karan Mehta   |  88000.00 |       1 |
+|    108 | Sneha Patel   |  82000.00 |       2 |
+|    110 | Simran Kaur   |  95000.00 |       2 |
+|    111 | Vivek Mishra  |  78000.00 |       2 |
+|    113 | Arjun Malhotra|  90000.00 |       3 |
+|    115 | Yash Thakur   |  98000.00 |       3 |
+|    117 | Dev Patel     |  87000.00 |       3 |
+|    118 | Tanvi Shah    |  91000.00 |       3 |
+|    119 | Akash Singh   | 100000.00 |       4 |
+|    121 | Mohit Agarwal |  95000.00 |       4 |
+|    123 | Nikhil Bansal |  89000.00 |       4 |
+|    125 | Manish Verma  |  85000.00 |       5 |
+|    129 | Varun Gupta   |  73000.00 |       5 |
++--------+---------------+-----------+---------+
+```
+
+---
+
+### 6. EXISTS
+Find departments that have at least one employee earning more than ₹100,000.
+
+```sql
+SELECT d.Dept_ID,
+       d.Dept_Name
+FROM Department d 
+WHERE EXISTS (
+    SELECT 1
+    FROM Employee e
+    WHERE e.Dept_ID = d.Dept_ID 
+    AND e.Salary > 100000
+);
+```
+
+**Output:**
+```
++---------+-------------------------+
+| Dept_ID | Dept_Name               |
++---------+-------------------------+
+|       1 | Artificial Intelligence |
++---------+-------------------------+
+```
+
+---
+
+### 7. Simulated INTERSECT
+Find employees who earn more than ₹80,000 AND belong to either the AI or Data Science department.
+
+```sql
+SELECT a.Emp_ID,
+       a.Emp_Name
+FROM 
+(
+    SELECT Emp_ID, Emp_Name 
+    FROM Employee
+    WHERE Salary > 80000
+) a
+INNER JOIN 
+(
+    SELECT Emp_ID, Emp_Name 
+    FROM Employee
+    WHERE Dept_ID IN (1, 4)
+) b
+ON a.Emp_ID = b.Emp_ID;
+```
+
+**Output:**
+```
++--------+---------------+
+| Emp_ID | Emp_Name      |
++--------+---------------+
+|    101 | Aarav Sharma  |
+|    102 | Priya Verma   |
+|    104 | Ananya Singh  |
+|    105 | Karan Mehta   |
+|    119 | Akash Singh   |
+|    121 | Mohit Agarwal |
+|    123 | Nikhil Bansal |
++--------+---------------+
+```
+
+---
+
+### 8. Simulated EXCEPT
+Find employees who earn more than ₹80,000 but are not in the Cyber Security department.
+
+```sql
+SELECT e.Emp_ID,
+       e.Emp_Name 
+FROM Employee e
+WHERE e.Salary > 80000 
+AND NOT EXISTS (
+    SELECT 1
+    FROM Employee e2
+    WHERE e2.Emp_ID = e.Emp_ID 
+    AND e2.Dept_ID = 3
+);
+```
+
+**Output:**
+```
++--------+---------------+
+| Emp_ID | Emp_Name      |
++--------+---------------+
+|    101 | Aarav Sharma  |
+|    102 | Priya Verma   |
+|    104 | Ananya Singh  |
+|    105 | Karan Mehta   |
+|    108 | Sneha Patel   |
+|    110 | Simran Kaur   |
+|    119 | Akash Singh   |
+|    121 | Mohit Agarwal |
+|    123 | Nikhil Bansal |
+|    125 | Manish Verma  |
++--------+---------------+
+```
+
+---
+
+## 🔍 Query Execution Plans (EXPLAIN Analysis)
+
+`EXPLAIN` displays how the MySQL Optimizer executes queries:
+
+### Query 1: EXPLAIN for Simple Selection
+```sql
+EXPLAIN SELECT * FROM Employee WHERE Salary > 90000;
+```
+- **Type:** `ALL` (Full table scan; evaluations made without index on `Salary`).
+- **Rows:** 30 (All 30 employee rows examined).
+
+### Query 2: EXPLAIN for INNER JOIN
+```sql
+EXPLAIN
+SELECT e.Emp_Name, d.Dept_Name 
+FROM Employee e
+INNER JOIN Department d ON e.Dept_ID = d.Dept_ID;
+```
+- **Join Ordering:** Table `d` scanned (`ALL`), table `e` looked up via foreign key index `Dept_ID` (`ref`).
+
+### Query 3: EXPLAIN for Correlated Subquery
+```sql
+EXPLAIN
+SELECT e.Emp_ID, e.Emp_Name, e.Salary
+FROM Employee e 
+WHERE e.Salary > (
+    SELECT AVG(e2.Salary) FROM Employee e2 WHERE e2.Dept_ID = e.Dept_ID
+);
+```
+- **Subquery Select Type:** `DEPENDENT SUBQUERY` (Evaluated for each row processed in the outer query).
+
+### Query 4: EXPLAIN for EXISTS
+```sql
+EXPLAIN
+SELECT d.Dept_Name FROM Department d 
+WHERE EXISTS (
+    SELECT 1 FROM Employee e WHERE e.Dept_ID = d.Dept_ID AND e.Salary > 100000
+);
+```
+- **Optimization:** Semi-join conversion allows early termination as soon as a qualifying employee is encountered.
+
+---
+
+## 📈 Experiment 4 Results & Conclusion
+
+The **Employee–Department–Project** database was successfully queried using `INNER JOIN`, `LEFT JOIN`, `SELF JOIN`, multi-table joins, correlated subqueries, `EXISTS`, and simulated `INTERSECT` and `EXCEPT` operations. Execution plans for selected queries were examined using `EXPLAIN` and their access methods, join types, row estimates, and optimizer characteristics were evaluated for performance analysis.
