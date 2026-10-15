@@ -1,4 +1,4 @@
-# DBMS Lab – Experiment 1: Employee–Department–Project Schema
+# DBMS Lab – Experiment 3: Employee–Department–Project Schema
 
 [![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![Database](https://img.shields.io/badge/Database-CompanyDB-005C84?style=for-the-badge&logo=databricks&logoColor=white)](https://github.com/)

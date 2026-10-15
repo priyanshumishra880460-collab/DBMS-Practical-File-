@@ -1,5 +1,5 @@
 -- ==============================================================================
--- DBMS Lab – Experiment 1: Employee–Department–Project Schema
+-- DBMS Lab – Experiment 3: Employee–Department–Project Schema
 -- File: database_complete.sql
 -- Description: Complete Unified SQL Script (Database + Schema + Data + Queries)
 -- ==============================================================================

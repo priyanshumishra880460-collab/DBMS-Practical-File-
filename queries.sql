@@ -1,5 +1,5 @@
 -- ==============================================================================
--- DBMS Lab – Experiment 1: Employee–Department–Project Schema
+-- DBMS Lab – Experiment 3: Employee–Department–Project Schema
 -- File: queries.sql
 -- Description: 18 SQL Queries categorized into Selection, Projection,
 --              Aggregate Functions, GROUP BY, HAVING, CASE Expressions, ORDER BY

@@ -1,5 +1,5 @@
 -- ==============================================================================
--- DBMS Lab – Experiment 1: Employee–Department–Project Schema
+-- DBMS Lab – Experiment 3: Employee–Department–Project Schema
 -- File: schema.sql
 -- Description: Database initialization and Table Definitions with Constraints
 -- ==============================================================================

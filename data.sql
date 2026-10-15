@@ -1,5 +1,5 @@
 -- ==============================================================================
--- DBMS Lab – Experiment 1: Employee–Department–Project Schema
+-- DBMS Lab – Experiment 3: Employee–Department–Project Schema
 -- File: data.sql
 -- Description: Data insertion for Departments, Employees, Projects, and Assignments
 -- ==============================================================================
