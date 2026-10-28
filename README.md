@@ -13,7 +13,7 @@ A structured laboratory repository containing practical experiments, relational 
 | Exp No. | Experiment Title | Folder / Code | Status |
 | :---: | :--- | :---: | :---: |
 | **01** | **Indian E-Commerce Platform ER Modeling** | [`📁 Experiment-1`](./Experiment-1) | ✅ Completed |
-| **02** | *Experiment 2* | — | ⏳ Upcoming |
+| **02** | **ER Diagram to Relational Schema & Integrity Constraints** | [`📁 Experiment-2`](./Experiment-2) | ✅ Completed |
 | **03** | **Employee–Department–Project Schema** | [`📁 Experiment-3`](./Experiment-3) | ✅ Completed |
 | **04** | **Advanced SQL Queries & Execution Plans** | [`📁 Experiment-4`](./Experiment-4) | ✅ Completed |
 | **05** | **SQL Views, View Updatability & Recursive CTE** | [`📁 Experiment-5`](./Experiment-5) | ✅ Completed |
@@ -33,6 +33,11 @@ DBMS-Practical-File-/
 │   ├── queries.sql             # Relational queries validating ER relationships
 │   ├── er_diagram.mermaid      # Standalone Mermaid ER diagram definition
 │   └── complete_experiment1.sql# Unified executable all-in-one script
+├── Experiment-2/               # Experiment 2: Relational Schema & Integrity Constraints
+│   ├── schema.sql              # 18-Table DDL schema with ON DELETE CASCADE / SET NULL
+│   ├── data.sql                # Sample data insertion across all relations
+│   ├── integrity_tests.sql     # Referential integrity violations, SET NULL & CASCADE tests
+│   └── complete_experiment2.sql# Unified executable all-in-one script
 ├── Experiment-3/               # Experiment 3: Employee-Department-Project Schema
 │   ├── schema.sql              # Database creation and table definitions
 │   ├── data.sql                # Dataset insertion (5 depts, 30 employees, 8 projects)
@@ -593,6 +598,312 @@ ORDER BY Average_Rating DESC;
 ## 📈 Experiment 1 Results & Conclusion
 
 The conceptual **Entity-Relationship (ER) Model** for the Indian E-Commerce platform was designed and translated into a Third Normal Form (3NF) relational database schema on MySQL. The design incorporated all foundational ER constructs: strong and weak entities, composite attributes, multi-valued phone attributes, subclass specialization, unary category hierarchies, and participation constraints. The schema was validated using representative datasets, and multi-table queries verified referential integrity across users, sellers, products, orders, payments, logistics, and feedback.
+
+---
+
+# 🔬 Experiment 2: ER Diagram to Relational Schema and Referential Integrity Constraints
+
+[![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Database](https://img.shields.io/badge/Database-ECOMMERCE-005C84?style=for-the-badge&logo=databricks&logoColor=white)](https://github.com/)
+
+---
+
+## 📌 Aim & Objectives
+
+To map an **Entity-Relationship (ER) Diagram** of an E-Commerce Platform into a **Normalized Relational Database Schema (18 Tables)** in MySQL, enforce relational integrity constraints (Primary Keys, Foreign Keys, Unique Keys), implement deletion behaviors (**`ON DELETE CASCADE`** and **`ON DELETE SET NULL`**), populate sample datasets, and evaluate:
+1. Schema instantiation verified via `SHOW TABLES;`.
+2. Referential integrity violation interception (`ERROR 1452` when inserting orphaned foreign keys).
+3. Preservation of child rows via `ON DELETE SET NULL` when parent categories are deleted.
+4. Automated cascading cleanup via `ON DELETE CASCADE` when parent customers are deleted.
+
+---
+
+## 📖 Theory & Core Concepts
+
+### 1. ER-to-Relational Mapping Rules
+- **Strong Entities:** Mapped into independent relations where the entity's key attribute becomes the primary key (`CUSTOMER`, `SELLER`, `PRODUCT`, `ORDERS`, `CATEGORY`, `PAYMENT`, `DELIVERY`).
+- **Composite Attributes:** Flattened into individual atomic columns within the base table (`ADDRESS` decomposed into `DoorNo`, `Street`, `Area`, `City`, `State`, `Pincode`).
+- **Multi-Valued Attributes:** Normalized into separate child tables comprising the parent entity's primary key and the multi-valued attribute forming a composite primary key (`CUSTOMER_PHONE`, `CUSTOMER_ALT_PHONE`, `SELLER_PHONE`, `ADDRESS_MOBILE`, `PRODUCT_IMAGE`).
+- **Weak Entities:** Identified by combining the identifying owner entity's primary key with a partial discriminator attribute (`ORDERITEM` with composite PK `(OrderID, ItemNo)`).
+- **Subclass Specialization:** Modeled using Table-Per-Subclass (TPS) where specialized attributes reside in distinct tables (`ELECTRONICS`, `CLOTHING`, `BOOKS`) referencing the base `PRODUCT(ProductID)`.
+- **Unary Self-Referencing Hierarchy:** Modeled within the same relation using a foreign key pointing back to its own primary key (`CATEGORY.ParentCategoryID` → `CATEGORY.CategoryID`).
+- **1:1 Relationships:** Enforced using unique foreign keys (`PAYMENT.OrderID` and `DELIVERY.OrderID` referencing `ORDERS.OrderID UNIQUE`).
+- **M:N Relationships:** Bridge relations holding foreign keys from both related tables (`ORDER_COUPON(OrderID, CouponCode)`).
+
+### 2. Referential Integrity & Referential Actions
+Referential integrity dictates that a foreign key value in a child table must reference a valid, existing primary key in the parent table or be `NULL`.
+- **`ON DELETE CASCADE`:** When a parent record is removed, MySQL automatically traverses foreign key constraints and deletes all corresponding dependent child rows across all cascading levels.
+- **`ON DELETE SET NULL`:** When a referenced parent row is deleted, MySQL updates the child foreign key column to `NULL`, maintaining existence of child records while severing the defunct parent reference (requires the foreign key column to be nullable).
+- **Integrity Violation (`ERROR 1452`):** When DML statements attempt to insert or update child records with non-existent foreign keys, MySQL actively halts execution to prevent orphaned records.
+
+---
+
+## 🗄️ Relational Schema Specification (18 Tables)
+
+| Table Name | Primary Key | Foreign Key(s) | Referenced Table & Action |
+| :--- | :--- | :--- | :--- |
+| **`CUSTOMER`** | `CustomerID` | *None* | Root customer account entity |
+| **`CUSTOMER_PHONE`** | `(CustomerID, Phone)` | `CustomerID` | → `CUSTOMER(CustomerID)` `ON DELETE CASCADE` |
+| **`CUSTOMER_ALT_PHONE`** | `(CustomerID, AltPhone)` | `CustomerID` | → `CUSTOMER(CustomerID)` `ON DELETE CASCADE` |
+| **`SELLER`** | `SellerID` | *None* | Merchant entity with GSTIN and banking details |
+| **`SELLER_PHONE`** | `(SellerID, Phone)` | `SellerID` | → `SELLER(SellerID)` `ON DELETE CASCADE` |
+| **`CATEGORY`** | `CategoryID` | `ParentCategoryID` | → `CATEGORY(CategoryID)` `ON DELETE SET NULL` |
+| **`PRODUCT`** | `ProductID` | `SellerID`<br>`CategoryID` | → `SELLER(SellerID)` `ON DELETE CASCADE`<br>→ `CATEGORY(CategoryID)` `ON DELETE SET NULL` |
+| **`PRODUCT_IMAGE`** | `(ProductID, Image)` | `ProductID` | → `PRODUCT(ProductID)` `ON DELETE CASCADE` |
+| **`ELECTRONICS`** | `ProductID` | `ProductID` | → `PRODUCT(ProductID)` `ON DELETE CASCADE` |
+| **`CLOTHING`** | `ProductID` | `ProductID` | → `PRODUCT(ProductID)` `ON DELETE CASCADE` |
+| **`BOOKS`** | `ProductID` | `ProductID` | → `PRODUCT(ProductID)` `ON DELETE CASCADE` |
+| **`ADDRESS`** | `AddressID` | `CustomerID` | → `CUSTOMER(CustomerID)` `ON DELETE CASCADE` |
+| **`ADDRESS_MOBILE`** | `(AddressID, MobileNo)` | `AddressID` | → `ADDRESS(AddressID)` `ON DELETE CASCADE` |
+| **`ORDERS`** | `OrderID` | `CustomerID`<br>`AddressID` | → `CUSTOMER(CustomerID)` `ON DELETE CASCADE`<br>→ `ADDRESS(AddressID)` `ON DELETE SET NULL` |
+| **`ORDER_COUPON`** | `(OrderID, CouponCode)` | `OrderID` | → `ORDERS(OrderID)` `ON DELETE CASCADE` |
+| **`ORDERITEM`** | `(OrderID, ItemNo)` | `OrderID`<br>`ProductID` | → `ORDERS(OrderID)` `ON DELETE CASCADE`<br>→ `PRODUCT(ProductID)` `ON DELETE CASCADE` |
+| **`PAYMENT`** | `PaymentID` | `OrderID` | → `ORDERS(OrderID)` `ON DELETE CASCADE` |
+| **`DELIVERY`** | `DeliveryID` | `OrderID`<br>`AddressID` | → `ORDERS(OrderID)` `ON DELETE CASCADE`<br>→ `ADDRESS(AddressID)` `ON DELETE CASCADE` |
+
+---
+
+## 📁 Experiment 2 Files
+
+```tree
+Experiment-2/
+├── schema.sql              # 18-Table DDL schema with ON DELETE CASCADE / SET NULL
+├── data.sql                # Sample data insertion across all relations
+├── integrity_tests.sql     # Referential integrity violations, SET NULL & CASCADE tests
+└── complete_experiment2.sql# Unified executable all-in-one script
+```
+
+---
+
+## 🚀 Getting Started / Execution Guide (Experiment 2)
+
+### Method 1: Using MySQL Command Line Client
+
+1. Open your terminal inside the repository folder.
+2. Log into MySQL:
+   ```bash
+   mysql -u root -p
+   ```
+3. Run the unified SQL script:
+   ```sql
+   SOURCE Experiment-2/complete_experiment2.sql;
+   ```
+   *Or run modularly:*
+   ```sql
+   SOURCE Experiment-2/schema.sql;
+   SOURCE Experiment-2/data.sql;
+   SOURCE Experiment-2/integrity_tests.sql;
+   ```
+
+### Method 2: Using MySQL Workbench
+
+1. Open **MySQL Workbench** and connect to your database instance.
+2. Open `Experiment-2/complete_experiment2.sql`.
+3. Click the ⚡ **Execute (All Queries)** button.
+4. View the table inventory, seeded data grids, and integrity verification outputs.
+
+---
+
+## 📊 Output Catalog & Integrity Demonstrations
+
+### OUTPUT 1: Schema Verification (`SHOW TABLES;`)
+
+Verifies that all 18 normalized relational tables are successfully registered in the database catalog:
+
+```sql
+SHOW TABLES;
+```
+
+**Output:**
+```
++-----------------------+
+| Tables_in_ecommerce   |
++-----------------------+
+| ADDRESS               |
+| ADDRESS_MOBILE        |
+| BOOKS                 |
+| CATEGORY              |
+| CLOTHING              |
+| CUSTOMER              |
+| CUSTOMER_ALT_PHONE    |
+| CUSTOMER_PHONE        |
+| DELIVERY              |
+| ELECTRONICS           |
+| ORDERS                |
+| ORDERITEM             |
+| ORDER_COUPON          |
+| PAYMENT               |
+| PRODUCT               |
+| PRODUCT_IMAGE         |
+| SELLER                |
+| SELLER_PHONE          |
++-----------------------+
+18 rows in set
+```
+*Conclusion: Proves complete relational schema instantiation.*
+
+---
+
+### OUTPUT 2: Sample Data Verification
+
+#### Customer Table:
+```sql
+SELECT * FROM CUSTOMER;
+```
+**Output:**
+```
++------------+-----------+---------------------------------+----------+---------------+
+| CustomerID | Name      | Email                           | Password | DateOfBirth   |
++------------+-----------+---------------------------------+----------+---------------+
+|          1 | Priyanshu | priyanshumishra880460@gmail.com | pass123  | 2007-01-20    |
++------------+-----------+---------------------------------+----------+---------------+
+```
+
+#### Product Table:
+```sql
+SELECT * FROM PRODUCT;
+```
+**Output:**
+```
++-----------+-------------+---------------+----------+----------+--------+----------+------------+
+| ProductID | ProductName | Description   | Price    | StockQty | Weight | SellerID | CategoryID |
++-----------+-------------+---------------+----------+----------+--------+----------+------------+
+|       301 | Laptop      | Gaming Laptop | 75000.00 |       10 |   2.50 |      101 |        201 |
++-----------+-------------+---------------+----------+----------+--------+----------+------------+
+```
+
+#### Orders Table:
+```sql
+SELECT * FROM ORDERS;
+```
+**Output:**
+```
++---------+------------+-------------+-------------+------------+-----------+
+| OrderID | OrderDate  | OrderStatus | TotalAmount | CustomerID | AddressID |
++---------+------------+-------------+-------------+------------+-----------+
+|     501 | 2026-08-14 | Placed      |    75000.00 |          1 |       401 |
++---------+------------+-------------+-------------+------------+-----------+
+```
+*Conclusion: Proves successful sample data insertion across parent and child relations.*
+
+---
+
+### OUTPUT 3: Referential Integrity Violation Demonstration
+
+Attempting to insert a child order record referencing a non-existent parent `CustomerID = 999`:
+
+```sql
+INSERT INTO ORDERS VALUES (502, '2026-08-14', 'Placed', 50000.00, 999, 401);
+```
+
+**Output / Error:**
+```
+ERROR 1452 (23000): Cannot add or update a child row: a foreign key constraint fails (`ecommerce`.`orders`, CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`CustomerID`) REFERENCES `customer` (`CustomerID`) ON DELETE CASCADE)
+```
+- **Reason:** `CustomerID = 999` does not exist in the parent `CUSTOMER` table.
+- **Result:** Successfully satisfies *"demonstrate referential integrity violations"*.
+
+---
+
+### OUTPUT 4: `ON DELETE SET NULL` Demonstration
+
+Validating that deleting a referenced parent record preserves the child tuple while nullifying its foreign key link.
+
+#### Step A: Inspect state before deletion
+```sql
+SELECT ProductID, ProductName, CategoryID FROM PRODUCT;
+```
+**Output:**
+```
++-----------+-------------+------------+
+| ProductID | ProductName | CategoryID |
++-----------+-------------+------------+
+|       301 | Laptop      |        201 |
++-----------+-------------+------------+
+```
+
+#### Step B: Delete parent category record
+```sql
+DELETE FROM CATEGORY WHERE CategoryID = 201;
+```
+
+#### Step C: Inspect state after deletion
+```sql
+SELECT ProductID, ProductName, CategoryID FROM PRODUCT;
+```
+**Output:**
+```
++-----------+-------------+------------+
+| ProductID | ProductName | CategoryID |
++-----------+-------------+------------+
+|       301 | Laptop      |       NULL |
++-----------+-------------+------------+
+```
+*Conclusion: `ON DELETE SET NULL` demonstrated successfully — the product remains in the catalog without being purged, and its `CategoryID` gracefully defaults to `NULL`.*
+
+---
+
+### OUTPUT 5: `ON DELETE CASCADE` Demonstration
+
+Validating that deleting a parent record triggers an automated cascade that cleans up all dependent child tuples.
+
+#### Step A: Inspect orders before deleting customer
+```sql
+SELECT * FROM ORDERS;
+```
+**Output:**
+```
++---------+------------+-------------+-------------+------------+-----------+
+| OrderID | OrderDate  | OrderStatus | TotalAmount | CustomerID | AddressID |
++---------+------------+-------------+-------------+------------+-----------+
+|     501 | 2026-08-14 | Placed      |    75000.00 |          1 |       401 |
++---------+------------+-------------+-------------+------------+-----------+
+```
+
+#### Step B: Delete parent customer record
+```sql
+DELETE FROM CUSTOMER WHERE CustomerID = 1;
+```
+**Output:**
+```
+Query OK, 1 row affected
+```
+
+#### Step C: Verify automated cascading deletion in Orders
+```sql
+SELECT * FROM ORDERS;
+```
+**Output:**
+```
+Empty set
+```
+
+#### Step D: Verify cascading deletion in child phone records
+```sql
+SELECT * FROM CUSTOMER_PHONE;
+```
+**Output:**
+```
+Empty set
+```
+*Conclusion: This demonstrates that deleting the parent customer automatically deleted all related child records across `ORDERS`, `CUSTOMER_PHONE`, and downstream dependencies. `ON DELETE CASCADE` demonstrated successfully.*
+
+---
+
+## 💡 Important Observations
+
+- **18 Normalized Relational Tables:** Eliminates redundancy and update anomalies by decomposing entities into Third Normal Form (3NF).
+- **Multi-Valued Phone Normalization:** Separating `CUSTOMER_PHONE`, `CUSTOMER_ALT_PHONE`, `SELLER_PHONE`, and `ADDRESS_MOBILE` avoids repeating groups and conforms to First Normal Form (1NF).
+- **Preservation vs Propagation:**
+  - `ON DELETE SET NULL` is ideal when child entities should survive parent deletion (e.g. Products should not be destroyed if their category classification is removed).
+  - `ON DELETE CASCADE` is essential for life-cycle dependent relations (e.g. Deleting a user account must delete their private contact numbers, orders, and addresses).
+- **Defensive Integrity:** Foreign key checks actively prevent corrupt or orphaned records from being committed to the database storage engine.
+
+---
+
+## 📈 Experiment 2 Results & Conclusion
+
+The conceptual E-Commerce ER Diagram was successfully translated into an 18-table normalized relational schema on MySQL. Foreign key constraints were established with `ON DELETE CASCADE` and `ON DELETE SET NULL` referential actions. Referential integrity was rigorously verified: insertion of non-existent parent foreign keys was blocked with `ERROR 1452`, deleting parent category records set dependent foreign keys to `NULL`, and deleting parent customer records cascaded clean removals across all dependent tables (`ORDERS`, `CUSTOMER_PHONE`).
 
 ---
 
