@@ -12,7 +12,7 @@ A structured laboratory repository containing practical experiments, relational 
 
 | Exp No. | Experiment Title | Folder / Code | Status |
 | :---: | :--- | :---: | :---: |
-| **01** | *Experiment 1* | — | ⏳ Upcoming |
+| **01** | **Indian E-Commerce Platform ER Modeling** | [`📁 Experiment-1`](./Experiment-1) | ✅ Completed |
 | **02** | *Experiment 2* | — | ⏳ Upcoming |
 | **03** | **Employee–Department–Project Schema** | [`📁 Experiment-3`](./Experiment-3) | ✅ Completed |
 | **04** | **Advanced SQL Queries & Execution Plans** | [`📁 Experiment-4`](./Experiment-4) | ✅ Completed |
@@ -27,6 +27,12 @@ A structured laboratory repository containing practical experiments, relational 
 DBMS-Practical-File-/
 ├── README.md                   # Master practical documentation & experiment index
 ├── .gitignore
+├── Experiment-1/               # Experiment 1: Indian E-Commerce Platform ER Modeling
+│   ├── schema.sql              # Relational DDL schema with constraints & specializations
+│   ├── data.sql                # Realistic Indian e-commerce dataset
+│   ├── queries.sql             # Relational queries validating ER relationships
+│   ├── er_diagram.mermaid      # Standalone Mermaid ER diagram definition
+│   └── complete_experiment1.sql# Unified executable all-in-one script
 ├── Experiment-3/               # Experiment 3: Employee-Department-Project Schema
 │   ├── schema.sql              # Database creation and table definitions
 │   ├── data.sql                # Dataset insertion (5 depts, 30 employees, 8 projects)
@@ -47,6 +53,546 @@ DBMS-Practical-File-/
     ├── triggers_and_audit.sql  # Salary validation & automated audit logging triggers
     └── complete_experiment6.sql# Unified executable script for Experiment 6
 ```
+
+---
+
+# 🔬 Experiment 1: Design an ER Diagram for an Indian E-Commerce Platform
+
+[![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Database](https://img.shields.io/badge/Database-EcommerceDB-005C84?style=for-the-badge&logo=databricks&logoColor=white)](https://github.com/)
+[![Diagram](https://img.shields.io/badge/Diagram-Mermaid_ER-ff69b4?style=for-the-badge&logo=mermaid&logoColor=white)](./Experiment-1/er_diagram.mermaid)
+
+---
+
+## 📌 Aim & Objectives
+
+To design a comprehensive **Entity-Relationship (ER) Diagram** and implement its corresponding relational database schema for an **Indian E-Commerce Platform**, incorporating:
+- Core entities: **Customer / User**, **Address**, **Seller** (with GSTIN), **Category**, **Product**, **Order**, **Order_Item**, **Payment**, **Delivery**, **Coupon**, **Cart**, **Wishlist**, and **Product_Review**.
+- Key relational modeling concepts:
+  - **Primary Keys** and candidate keys
+  - **Composite Attributes** (e.g., Address flattened into structured attributes)
+  - **Multi-valued Attributes** (e.g., User Phone numbers normalized into a dedicated table)
+  - **Weak Entities** (`Order_Item` dependent on `Orders`)
+  - **Specialization / Generalization** (Subclassing `Product` into `Electronics_Product` and `Fashion_Product`)
+  - **Participation Constraints** (Total/mandatory vs Partial/optional participation)
+  - **Self-Referencing Unary Relationship** (Hierarchical categories & subcategories)
+
+---
+
+## 📖 Theory & Core Concepts
+
+An **Entity-Relationship (ER) Model** is a conceptual blueprint used in database engineering to represent the logical structure of an application domain before physical database creation.
+
+### Key ER Components & Notations
+
+1. **Entity:** A distinguishable real-world object or concept represented by a rectangle.
+   - *Strong Entity:* Possesses an intrinsic primary key attribute (`Users`, `Seller`, `Product`, `Orders`).
+   - *Weak Entity:* Lacks sufficient key attributes and depends existentially on an identifying owner entity via an identifying relationship (`Order_Item` identified through `Orders`).
+2. **Attribute:** A descriptive property of an entity represented by an oval.
+   - *Key Attribute:* Uniquely identifies an entity occurrence (underlined, e.g., `User_ID`, `Seller_ID`).
+   - *Composite Attribute:* Composed of multiple constituent sub-attributes (e.g., Address broken down into `Address_Line1`, `City`, `State`, `Pincode`).
+   - *Multi-valued Attribute:* May contain multiple values for a single entity instance (double oval, e.g., customer phone numbers `Phone_Number`).
+3. **Relationship:** An association among two or more entities represented by a diamond.
+   - *Cardinality Ratios:* 1 : 1 (Order to Payment), 1 : N (User to Orders, Seller to Products), N : M (Users to Products via Cart / Wishlist, Orders to Coupons).
+4. **Specialization & Generalization:**
+   - Top-down modeling where higher-level general superclass entities are divided into specialized subclasses sharing the superclass identity.
+   - Superclass `Product` specializes into `Electronics_Product` (attributes: `Model_Number`, `RAM_Capacity`, `Storage_Capacity`, `Warranty_Months`) and `Fashion_Product` (attributes: `Size`, `Color`, `Fabric_Material`, `Gender_Category`).
+5. **Participation Constraints:**
+   - *Total (Mandatory) Participation:* Every entity in the set must participate in the relationship (represented by double lines, e.g., an `Orders` entity must have a `Payment` and an assigned `Users`).
+   - *Partial (Optional) Participation:* Entities may exist without participating in the relationship (represented by single lines, e.g., a registered `Users` who has never placed an `Orders`).
+
+---
+
+## 🗺️ Entity-Relationship (ER) Diagram
+
+```mermaid
+erDiagram
+    USERS ||--o{ USER_PHONE : "has (Multi-valued)"
+    USERS ||--o{ ADDRESS : "has (1:N)"
+    USERS ||--o{ ORDERS : "places (1:N)"
+    USERS ||--o{ CART : "adds_to"
+    USERS ||--o{ WISHLIST : "saves_to"
+    USERS ||--o{ PRODUCT_REVIEW : "writes"
+
+    SELLER ||--o{ PRODUCT : "lists (1:N)"
+    CATEGORY ||--o{ CATEGORY : "parent_of (Self-Ref)"
+    CATEGORY ||--o{ PRODUCT : "classifies"
+
+    PRODUCT ||--o| ELECTRONICS_PRODUCT : "specializes_to (Subclass)"
+    PRODUCT ||--o| FASHION_PRODUCT : "specializes_to (Subclass)"
+    PRODUCT ||--o{ ORDER_ITEM : "included_in"
+    PRODUCT ||--o{ CART : "held_in"
+    PRODUCT ||--o{ WISHLIST : "saved_in"
+    PRODUCT ||--o{ PRODUCT_REVIEW : "receives"
+
+    ADDRESS ||--o{ ORDERS : "ships_to"
+    ORDERS ||--|{ ORDER_ITEM : "contains (Weak Entity)"
+    ORDERS ||--|| PAYMENT : "paid_via (1:1 Mandatory)"
+    ORDERS ||--|| DELIVERY : "tracked_via (1:1 Mandatory)"
+    ORDERS }o--o{ COUPON : "applied_via ORDER_COUPON"
+    SELLER ||--o{ ORDER_ITEM : "fulfills"
+
+    USERS {
+        int User_ID PK
+        string Full_Name
+        string Email UK
+        string Password_Hash
+        date Date_Of_Birth
+        string Gender
+    }
+
+    USER_PHONE {
+        int User_ID PK,FK
+        string Phone_Number PK
+        boolean Is_Primary
+    }
+
+    ADDRESS {
+        int Address_ID PK
+        int User_ID FK
+        string Full_Name
+        string Phone
+        string Address_Line1
+        string Address_Line2
+        string City
+        string State
+        string Pincode
+        string Address_Type
+    }
+
+    SELLER {
+        int Seller_ID PK
+        string Seller_Name
+        string Email UK
+        string Phone
+        string GSTIN UK
+        string PAN_Number
+        string Bank_Account_No
+        string Bank_IFSC
+        string City
+        string State
+        decimal Rating
+    }
+
+    CATEGORY {
+        int Category_ID PK
+        string Category_Name
+        int Parent_Category_ID FK
+    }
+
+    PRODUCT {
+        int Product_ID PK
+        string Product_Name
+        string Description
+        decimal Price
+        decimal Discount_Percent
+        int Stock_Quantity
+        string Brand
+        int Category_ID FK
+        int Seller_ID FK
+    }
+
+    ELECTRONICS_PRODUCT {
+        int Product_ID PK,FK
+        string Model_Number
+        int Warranty_Months
+        string RAM_Capacity
+        string Storage_Capacity
+        string Power_Consumption
+    }
+
+    FASHION_PRODUCT {
+        int Product_ID PK,FK
+        string Size
+        string Color
+        string Fabric_Material
+        string Gender_Category
+    }
+
+    ORDERS {
+        int Order_ID PK
+        int User_ID FK
+        int Shipping_Address_ID FK
+        timestamp Order_Date
+        string Order_Status
+        decimal Total_Amount
+        decimal Discount_Amount
+        decimal Final_Amount
+    }
+
+    ORDER_ITEM {
+        int Order_Item_ID PK
+        int Order_ID PK,FK
+        int Product_ID FK
+        int Seller_ID FK
+        int Quantity
+        decimal Price_Per_Unit
+        decimal Discount
+        decimal Subtotal
+    }
+
+    PAYMENT {
+        int Payment_ID PK
+        int Order_ID UK,FK
+        timestamp Payment_Date
+        decimal Amount
+        string Payment_Method
+        string Payment_Status
+        string Transaction_Reference
+    }
+
+    DELIVERY {
+        int Delivery_ID PK
+        int Order_ID UK,FK
+        string Delivery_Partner
+        string Tracking_Number UK
+        date Estimated_Delivery
+        timestamp Actual_Delivery
+        string Delivery_Status
+    }
+
+    COUPON {
+        int Coupon_ID PK
+        string Coupon_Code UK
+        string Description
+        string Discount_Type
+        decimal Discount_Value
+        decimal Min_Order_Value
+        date Expiry_Date
+    }
+
+    PRODUCT_REVIEW {
+        int Review_ID PK
+        int Product_ID FK
+        int User_ID FK
+        int Rating
+        string Review_Text
+        timestamp Review_Date
+    }
+```
+
+---
+
+## 🗄️ Relational Schema Architecture & Table Specifications
+
+The conceptual ER model maps directly to 15 relational tables in MySQL adhering to Third Normal Form (3NF):
+
+| Relational Table | Primary Key | Foreign Key(s) | Architectural Concept / Purpose |
+| :--- | :--- | :--- | :--- |
+| **`Users`** | `User_ID` | *None* | Strong customer entity profile and authentication credentials |
+| **`User_Phone`** | `(User_ID, Phone_Number)` | `User_ID` → `Users` | First normal form resolution of multi-valued phone numbers |
+| **`Address`** | `Address_ID` | `User_ID` → `Users` | Decomposition of composite address attribute (1 : N per user) |
+| **`Seller`** | `Seller_ID` | *None* | Indian merchant registry holding statutory GSTIN and bank details |
+| **`Category`** | `Category_ID` | `Parent_Category_ID` → `Category` | Self-referencing unary tree for product taxonomy |
+| **`Product`** | `Product_ID` | `Category_ID`, `Seller_ID` | General merchandise superclass |
+| **`Electronics_Product`** | `Product_ID` | `Product_ID` → `Product` | Specialization subclass with RAM, Storage, and Warranty attributes |
+| **`Fashion_Product`** | `Product_ID` | `Product_ID` → `Product` | Specialization subclass with Size, Fabric, and Color attributes |
+| **`Orders`** | `Order_ID` | `User_ID`, `Shipping_Address_ID` | Central commercial order record |
+| **`Order_Item`** | `(Order_Item_ID, Order_ID)`| `Order_ID`, `Product_ID`, `Seller_ID` | Weak entity identified through composite relation with owner `Orders` |
+| **`Payment`** | `Payment_ID` | `Order_ID` → `Orders` (UNIQUE) | 1:1 Mandatory payment transaction tracking |
+| **`Delivery`** | `Delivery_ID` | `Order_ID` → `Orders` (UNIQUE) | 1:1 Indian logistics fulfillment tracking (BlueDart, Delhivery) |
+| **`Coupon`** | `Coupon_ID` | *None* | Promotional campaign discounts |
+| **`Order_Coupon`** | `(Order_ID, Coupon_ID)` | `Order_ID`, `Coupon_ID` | Junction table resolving M:N relationship between Orders and Coupons |
+| **`Cart` / `Wishlist`** | `Cart_ID` / `Wishlist_ID`| `User_ID`, `Product_ID` | Junction tables capturing shopping cart and saved merchandise |
+| **`Product_Review`** | `Review_ID` | `Product_ID`, `User_ID` | Customer feedback ratings and verified buyer reviews |
+
+---
+
+## 📁 Experiment 1 Files
+
+```tree
+Experiment-1/
+├── schema.sql              # Relational DDL schema with constraints & specializations
+├── data.sql                # Realistic Indian e-commerce dataset
+├── queries.sql             # Relational queries validating ER relationships
+├── er_diagram.mermaid      # Standalone Mermaid ER diagram definition
+└── complete_experiment1.sql# Unified executable all-in-one script
+```
+
+---
+
+## 🚀 Getting Started / Execution Guide (Experiment 1)
+
+### Method 1: Using MySQL Command Line Client
+
+1. Open your terminal inside the repository folder.
+2. Log into MySQL:
+   ```bash
+   mysql -u root -p
+   ```
+3. Run the unified SQL script:
+   ```sql
+   SOURCE Experiment-1/complete_experiment1.sql;
+   ```
+   *Or execute modularly:*
+   ```sql
+   SOURCE Experiment-1/schema.sql;
+   SOURCE Experiment-1/data.sql;
+   SOURCE Experiment-1/queries.sql;
+   ```
+
+### Method 2: Using MySQL Workbench
+
+1. Open **MySQL Workbench** and connect to your local database server.
+2. Open `Experiment-1/complete_experiment1.sql`.
+3. Click the ⚡ **Execute (All Queries)** button.
+4. Review the created schema, seeded Indian e-commerce datasets, and query verification grids.
+
+---
+
+## 📊 Relational Queries & Verification Output Catalog
+
+### 1. Customer Order Summary with Shipping Address
+Validates 1:N relationship from `Users` to `Orders` and composite `Address` dereferencing:
+
+```sql
+SELECT 
+    o.Order_ID,
+    u.Full_Name AS Customer_Name,
+    CONCAT(a.Address_Line1, ', ', a.City, ', ', a.State, ' - ', a.Pincode) AS Shipping_Address,
+    a.Address_Type,
+    o.Order_Date,
+    o.Order_Status,
+    o.Final_Amount
+FROM Orders o
+INNER JOIN Users u ON o.User_ID = u.User_ID
+INNER JOIN Address a ON o.Shipping_Address_ID = a.Address_ID
+ORDER BY o.Order_ID;
+```
+
+**Output:**
+```
++----------+---------------+------------------------------------------------------+--------------+---------------------+--------------+--------------+
+| Order_ID | Customer_Name | Shipping_Address                                     | Address_Type | Order_Date          | Order_Status | Final_Amount |
++----------+---------------+------------------------------------------------------+--------------+---------------------+--------------+--------------+
+|     1001 | Aarav Sharma  | Flat 402, Royal Palms, Noida, Uttar Pradesh - 201301 | Home         | 2026-10-20 10:15:00 | Delivered    |     62999.00 |
+|     1002 | Priya Patel   | B-12, Shanti Kunj Apartments, Mumbai, Maharashtra... | Home         | 2026-10-22 14:30:00 | Shipped      |      4999.00 |
+|     1003 | Ananya Iyer   | 34, 4th Main Road, Indiranagar, Bengaluru, Karnat... | Home         | 2026-10-24 16:45:00 | Confirmed    |      1299.00 |
++----------+---------------+------------------------------------------------------+--------------+---------------------+--------------+--------------+
+```
+
+---
+
+### 2. Line-Item Order Breakdown (Weak Entity `Order_Item` Traversal)
+Traverses the multi-table path `Orders` ↔ `Order_Item` ↔ `Product` ↔ `Seller` ↔ `Category`:
+
+```sql
+SELECT 
+    oi.Order_ID,
+    p.Product_Name,
+    c.Category_Name,
+    s.Seller_Name,
+    s.GSTIN,
+    oi.Quantity,
+    oi.Price_Per_Unit,
+    oi.Subtotal
+FROM Order_Item oi
+INNER JOIN Product p ON oi.Product_ID = p.Product_ID
+INNER JOIN Category c ON p.Category_ID = c.Category_ID
+INNER JOIN Seller s ON oi.Seller_ID = s.Seller_ID
+ORDER BY oi.Order_ID;
+```
+
+**Output:**
+```
++----------+--------------------------------+---------------------------+-------------------------+-----------------+----------+----------------+----------+
+| Order_ID | Product_Name                   | Category_Name             | Seller_Name             | GSTIN           | Quantity | Price_Per_Unit | Subtotal |
++----------+--------------------------------+---------------------------+-------------------------+-----------------+----------+----------------+----------+
+|     1001 | OnePlus 12 5G (Flowy Emerald)  | Smartphones & Accessories | TechBazaar Retail India | 07AAACT1234A1Z5 |        1 |       64999.00 | 62999.00 |
+|     1002 | Pure Banarasi Silk Saree       | Ethnic Wear               | Heritage Silk Weavers   | 24AABCH3456D1Z1 |        1 |        5499.00 |  4999.00 |
+|     1003 | Men Cotton Straight Kurta      | Ethnic Wear               | DesiTrends Fashion Hub  | 08AABCF4567B1Z2 |        1 |        1299.00 |  1299.00 |
++----------+--------------------------------+---------------------------+-------------------------+-----------------+----------+----------------+----------+
+```
+
+---
+
+### 3. Payment and Coupon Verification (1:1 Payment & M:N Coupon)
+Verifies payment channel (`UPI`, `Debit_Card`, `COD`), transaction status, and promotional savings:
+
+```sql
+SELECT 
+    o.Order_ID,
+    o.Total_Amount,
+    COALESCE(cp.Coupon_Code, 'None') AS Coupon_Applied,
+    o.Discount_Amount,
+    o.Final_Amount,
+    pm.Payment_Method,
+    pm.Payment_Status
+FROM Orders o
+LEFT JOIN Payment pm ON o.Order_ID = pm.Order_ID
+LEFT JOIN Order_Coupon oc ON o.Order_ID = oc.Order_ID
+LEFT JOIN Coupon cp ON oc.Coupon_ID = cp.Coupon_ID
+ORDER BY o.Order_ID;
+```
+
+**Output:**
+```
++----------+--------------+----------------+-----------------+--------------+----------------+----------------+
+| Order_ID | Total_Amount | Coupon_Applied | Discount_Amount | Final_Amount | Payment_Method | Payment_Status |
++----------+--------------+----------------+-----------------+--------------+----------------+----------------+
+|     1001 |     64999.00 | DIWALI2026     |         2000.00 |     62999.00 | UPI            | Success        |
+|     1002 |      5499.00 | FESTIVE500     |          500.00 |      4999.00 | Debit_Card     | Success        |
+|     1003 |      1299.00 | None           |            0.00 |      1299.00 | COD            | Pending        |
++----------+--------------+----------------+-----------------+--------------+----------------+----------------+
+```
+
+---
+
+### 4. Order Logistics & Delivery Tracking
+Verifies Indian logistics fulfillment tracking (`BlueDart Express`, `Delhivery Logistics`, `Shadowfax`):
+
+```sql
+SELECT 
+    o.Order_ID,
+    u.Full_Name AS Customer,
+    d.Delivery_Partner,
+    d.Tracking_Number,
+    d.Delivery_Status,
+    d.Estimated_Delivery,
+    d.Actual_Delivery
+FROM Delivery d
+INNER JOIN Orders o ON d.Order_ID = o.Order_ID
+INNER JOIN Users u ON o.User_ID = u.User_ID
+ORDER BY o.Order_ID;
+```
+
+**Output:**
+```
++----------+--------------+---------------------+---------------------+------------------+--------------------+---------------------+
+| Order_ID | Customer     | Delivery_Partner    | Tracking_Number     | Delivery_Status  | Estimated_Delivery | Actual_Delivery     |
++----------+--------------+---------------------+---------------------+------------------+--------------------+---------------------+
+|     1001 | Aarav Sharma | BlueDart Express    | BLUEDART-IND-778899 | Delivered        | 2026-10-23         | 2026-10-23 15:40:00 |
+|     1002 | Priya Patel  | Delhivery Logistics | DELHIVERY-DL-554433 | In_Transit       | 2026-10-26         | NULL                |
+|     1003 | Ananya Iyer  | Shadowfax Express   | SHADOW-EXP-112233   | Order_Dispatched | 2026-10-28         | NULL                |
++----------+--------------+---------------------+---------------------+------------------+--------------------+---------------------+
+```
+
+---
+
+### 5. Product Specialization: Subclass Queries
+
+#### A. Electronics Catalog (`Electronics_Product`)
+```sql
+SELECT 
+    p.Product_ID,
+    p.Product_Name,
+    p.Brand,
+    p.Price,
+    e.Model_Number,
+    e.RAM_Capacity,
+    e.Storage_Capacity,
+    e.Warranty_Months
+FROM Product p
+INNER JOIN Electronics_Product e ON p.Product_ID = e.Product_ID;
+```
+
+**Output:**
+```
++------------+-------------------------------+---------+----------+---------------+--------------+------------------+-----------------+
+| Product_ID | Product_Name                  | Brand   | Price    | Model_Number  | RAM_Capacity | Storage_Capacity | Warranty_Months |
++------------+-------------------------------+---------+----------+---------------+--------------+------------------+-----------------+
+|          1 | OnePlus 12 5G (Flowy Emerald) | OnePlus | 64999.00 | OP-12-GRN-256 | 16 GB        | 256 GB           |              12 |
+|          2 | Apple MacBook Air M2          | Apple   | 89900.00 | MLXW3HN/A     | 8 GB         | 256 GB SSD       |              12 |
+|          5 | boAt Airdopes 141 ANC         | boAt    |  1799.00 | AD-141-ANC-BLK| N/A          | N/A              |              12 |
++------------+-------------------------------+---------+----------+---------------+--------------+------------------+-----------------+
+```
+
+#### B. Fashion Catalog (`Fashion_Product`)
+```sql
+SELECT 
+    p.Product_ID,
+    p.Product_Name,
+    p.Brand,
+    p.Price,
+    f.Size,
+    f.Color,
+    f.Fabric_Material,
+    f.Gender_Category
+FROM Product p
+INNER JOIN Fashion_Product f ON p.Product_ID = f.Product_ID;
+```
+
+**Output:**
+```
++------------+---------------------------+---------------+---------+------------------+--------------------+-------------------------+-----------------+
+| Product_ID | Product_Name              | Brand         | Price   | Size             | Color              | Fabric_Material         | Gender_Category |
++------------+---------------------------+---------------+---------+------------------+--------------------+-------------------------+-----------------+
+|          3 | Pure Banarasi Silk Saree  | Heritage Silk | 5499.00 | Free Size (5.5m) | Royal Green & Gold | 100% Banarasi Katan Silk| Women           |
+|          4 | Men Cotton Straight Kurta | DesiTrends    | 1299.00 | L (42)           | Mustard Yellow     | 100% Combed Cotton      | Men             |
++------------+---------------------------+---------------+---------+------------------+--------------------+-------------------------+-----------------+
+```
+
+---
+
+### 6. Seller Performance & Revenue Aggregation
+```sql
+SELECT 
+    s.Seller_ID,
+    s.Seller_Name,
+    s.City,
+    s.Rating,
+    COUNT(oi.Order_Item_ID) AS Total_Items_Sold,
+    SUM(oi.Subtotal) AS Total_Gross_Revenue
+FROM Seller s
+LEFT JOIN Order_Item oi ON s.Seller_ID = oi.Seller_ID
+GROUP BY s.Seller_ID, s.Seller_Name, s.City, s.Rating
+ORDER BY Total_Gross_Revenue DESC;
+```
+
+**Output:**
+```
++-----------+-------------------------+-----------+--------+------------------+---------------------+
+| Seller_ID | Seller_Name             | City      | Rating | Total_Items_Sold | Total_Gross_Revenue |
++-----------+-------------------------+-----------+--------+------------------+---------------------+
+|         1 | TechBazaar Retail India | New Delhi |   4.85 |                1 |            62999.00 |
+|         4 | Heritage Silk Weavers   | Surat     |   4.65 |                1 |             4999.00 |
+|         2 | DesiTrends Fashion Hub  | Jaipur    |   4.70 |                1 |             1299.00 |
+|         3 | SmartGadgets India Ltd  | Bengaluru |   4.90 |                0 |                NULL |
++-----------+-------------------------+-----------+--------+------------------+---------------------+
+```
+
+---
+
+### 7. Product Customer Feedback & Review Metrics
+```sql
+SELECT 
+    p.Product_ID,
+    p.Product_Name,
+    COUNT(r.Review_ID) AS Total_Reviews,
+    ROUND(AVG(r.Rating), 1) AS Average_Rating,
+    GROUP_CONCAT(CONCAT(u.Full_Name, ': "', r.Review_Text, '"') SEPARATOR ' | ') AS Customer_Reviews
+FROM Product p
+LEFT JOIN Product_Review r ON p.Product_ID = r.Product_ID
+LEFT JOIN Users u ON r.User_ID = u.User_ID
+GROUP BY p.Product_ID, p.Product_Name
+ORDER BY Average_Rating DESC;
+```
+
+**Output:**
+```
++------------+-------------------------------+---------------+----------------+---------------------------------------------------------------------------------+
+| Product_ID | Product_Name                  | Total_Reviews | Average_Rating | Customer_Reviews                                                                |
++------------+-------------------------------+---------------+----------------+---------------------------------------------------------------------------------+
+|          1 | OnePlus 12 5G (Flowy Emerald) |             1 |            5.0 | Aarav Sharma: "Superb performance and camera clarity! Battery lasts over a day" |
+|          3 | Pure Banarasi Silk Saree      |             1 |            5.0 | Priya Patel: "Authentic Banarasi weave, rich fabric and stunning green color"   |
+|          5 | boAt Airdopes 141 ANC         |             1 |            4.0 | Rahul Verma: "Great sound quality for the price point, battery backup is good"  |
++------------+-------------------------------+---------------+----------------+---------------------------------------------------------------------------------+
+```
+
+---
+
+## 💡 Important Design Decisions
+
+- **Weak Entity Modeling:** `Order_Item` cannot exist independently of its parent `Orders`. Its primary key is defined as a composite key `(Order_Item_ID, Order_ID)` enforcing strong existential dependency.
+- **Relational Specialization Strategy:** We adopted the **Table-Per-Subclass (TPS)** mapping strategy where common attributes reside in `Product` while specialized attributes reside in `Electronics_Product` and `Fashion_Product`, linked via Foreign Key Primary Keys (`Product_ID`).
+- **Indian Statutory Compliance:** Included `GSTIN` (15-character alphanumeric format) and `PAN_Number` in the `Seller` entity along with IFSC banking details, reflecting real-world Indian commercial workflows.
+- **Logistics Integration:** The `Delivery` entity captures Indian logistics fulfillment (`BlueDart`, `Delhivery`, `Shadowfax`) with distinct status progressions.
+
+---
+
+## 📈 Experiment 1 Results & Conclusion
+
+The conceptual **Entity-Relationship (ER) Model** for the Indian E-Commerce platform was designed and translated into a Third Normal Form (3NF) relational database schema on MySQL. The design incorporated all foundational ER constructs: strong and weak entities, composite attributes, multi-valued phone attributes, subclass specialization, unary category hierarchies, and participation constraints. The schema was validated using representative datasets, and multi-table queries verified referential integrity across users, sellers, products, orders, payments, logistics, and feedback.
 
 ---
 

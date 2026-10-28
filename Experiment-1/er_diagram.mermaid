@@ -1,0 +1,163 @@
+erDiagram
+    USERS ||--o{ USER_PHONE : "has"
+    USERS ||--o{ ADDRESS : "has"
+    USERS ||--o{ ORDERS : "places"
+    USERS ||--o{ CART : "adds_to"
+    USERS ||--o{ WISHLIST : "adds_to"
+    USERS ||--o{ PRODUCT_REVIEW : "writes"
+
+    SELLER ||--o{ PRODUCT : "lists"
+    CATEGORY ||--o{ CATEGORY : "parent_of"
+    CATEGORY ||--o{ PRODUCT : "classifies"
+
+    PRODUCT ||--o| ELECTRONICS_PRODUCT : "specializes_to"
+    PRODUCT ||--o| FASHION_PRODUCT : "specializes_to"
+    PRODUCT ||--o{ ORDER_ITEM : "included_in"
+    PRODUCT ||--o{ CART : "held_in"
+    PRODUCT ||--o{ WISHLIST : "saved_in"
+    PRODUCT ||--o{ PRODUCT_REVIEW : "receives"
+
+    ADDRESS ||--o{ ORDERS : "ships_to"
+    ORDERS ||--|{ ORDER_ITEM : "contains (Weak Entity)"
+    ORDERS ||--|| PAYMENT : "paid_via (Mandatory)"
+    ORDERS ||--|| DELIVERY : "fulfilled_by"
+    ORDERS }o--o{ COUPON : "applied_via ORDER_COUPON"
+    SELLER ||--o{ ORDER_ITEM : "fulfills"
+
+    USERS {
+        int User_ID PK
+        string Full_Name
+        string Email UK
+        string Password_Hash
+        date Date_Of_Birth
+        string Gender
+    }
+
+    USER_PHONE {
+        int User_ID PK,FK
+        string Phone_Number PK
+        boolean Is_Primary
+    }
+
+    ADDRESS {
+        int Address_ID PK
+        int User_ID FK
+        string Full_Name
+        string Phone
+        string Address_Line1
+        string Address_Line2
+        string City
+        string State
+        string Pincode
+        string Address_Type
+    }
+
+    SELLER {
+        int Seller_ID PK
+        string Seller_Name
+        string Email UK
+        string Phone
+        string GSTIN UK
+        string PAN_Number
+        string Bank_Account_No
+        string Bank_IFSC
+        string City
+        string State
+        decimal Rating
+    }
+
+    CATEGORY {
+        int Category_ID PK
+        string Category_Name
+        int Parent_Category_ID FK
+    }
+
+    PRODUCT {
+        int Product_ID PK
+        string Product_Name
+        string Description
+        decimal Price
+        decimal Discount_Percent
+        int Stock_Quantity
+        string Brand
+        int Category_ID FK
+        int Seller_ID FK
+    }
+
+    ELECTRONICS_PRODUCT {
+        int Product_ID PK,FK
+        string Model_Number
+        int Warranty_Months
+        string RAM_Capacity
+        string Storage_Capacity
+        string Power_Consumption
+    }
+
+    FASHION_PRODUCT {
+        int Product_ID PK,FK
+        string Size
+        string Color
+        string Fabric_Material
+        string Gender_Category
+    }
+
+    ORDERS {
+        int Order_ID PK
+        int User_ID FK
+        int Shipping_Address_ID FK
+        timestamp Order_Date
+        string Order_Status
+        decimal Total_Amount
+        decimal Discount_Amount
+        decimal Final_Amount
+    }
+
+    ORDER_ITEM {
+        int Order_Item_ID PK
+        int Order_ID PK,FK
+        int Product_ID FK
+        int Seller_ID FK
+        int Quantity
+        decimal Price_Per_Unit
+        decimal Discount
+        decimal Subtotal
+    }
+
+    PAYMENT {
+        int Payment_ID PK
+        int Order_ID UK,FK
+        timestamp Payment_Date
+        decimal Amount
+        string Payment_Method
+        string Payment_Status
+        string Transaction_Reference
+    }
+
+    DELIVERY {
+        int Delivery_ID PK
+        int Order_ID UK,FK
+        string Delivery_Partner
+        string Tracking_Number UK
+        date Estimated_Delivery
+        timestamp Actual_Delivery
+        string Delivery_Status
+    }
+
+    COUPON {
+        int Coupon_ID PK
+        string Coupon_Code UK
+        string Description
+        string Discount_Type
+        decimal Discount_Value
+        decimal Min_Order_Value
+        date Expiry_Date
+    }
+
+    PRODUCT_REVIEW {
+        int Review_ID PK
+        int Product_ID FK
+        int User_ID FK
+        int Rating
+        string Review_Text
+        timestamp Review_Date
+    }
