@@ -17,6 +17,7 @@ A structured laboratory repository containing practical experiments, relational 
 | **03** | **Employee–Department–Project Schema** | [`📁 Experiment-3`](./Experiment-3) | ✅ Completed |
 | **04** | **Advanced SQL Queries & Execution Plans** | [`📁 Experiment-4`](./Experiment-4) | ✅ Completed |
 | **05** | **SQL Views, View Updatability & Recursive CTE** | [`📁 Experiment-5`](./Experiment-5) | ✅ Completed |
+| **06** | **Stored Procedures, Triggers & Audit Logging** | [`📁 Experiment-6`](./Experiment-6) | ✅ Completed |
 
 ---
 
@@ -35,11 +36,16 @@ DBMS-Practical-File-/
 │   ├── advanced_queries.sql    # 8 Advanced queries (Joins, Subqueries, Sets)
 │   ├── explain_plans.sql       # EXPLAIN execution plan analysis
 │   └── complete_experiment4.sql# Unified executable script for Experiment 4
-└── Experiment-5/               # Experiment 5: SQL Views & Recursive CTE
-    ├── schema_update.sql       # Hierarchy alteration & manager assignments
-    ├── views_and_updatability.sql # Views creation & updatability tests
-    ├── recursive_cte.sql       # Hierarchical recursive CTE queries
-    └── complete_experiment5.sql# Unified executable script for Experiment 5
+├── Experiment-5/               # Experiment 5: SQL Views & Recursive CTE
+│   ├── schema_update.sql       # Hierarchy alteration & manager assignments
+│   ├── views_and_updatability.sql # Views creation & updatability tests
+│   ├── recursive_cte.sql       # Hierarchical recursive CTE queries
+│   └── complete_experiment5.sql# Unified executable script for Experiment 5
+└── Experiment-6/               # Experiment 6: Stored Procedures, Triggers & Audit Logging
+    ├── schema_and_data.sql     # Base tables, constraints, audit table & sample records
+    ├── stored_procedures.sql   # transfer_employee procedure with exception handling
+    ├── triggers_and_audit.sql  # Salary validation & automated audit logging triggers
+    └── complete_experiment6.sql# Unified executable script for Experiment 6
 ```
 
 ---
@@ -1058,3 +1064,302 @@ ORDER BY Level, Emp_ID;
 
 SQL views for departmental salary aggregation and multi-table employee hierarchy were successfully defined and evaluated. View updatability rules were validated: simple projections permitted updates, whereas aggregate and joined views were properly rejected with `ERROR 1288`. Recursive Common Table Expressions (`WITH RECURSIVE`) efficiently computed organizational reporting paths and rendered indented hierarchy trees across all organizational levels.
 
+---
+
+# 🔬 Experiment 6: Stored Procedures, Triggers and Audit Logging
+
+[![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Database](https://img.shields.io/badge/Database-CompanyDB-005C84?style=for-the-badge&logo=databricks&logoColor=white)](https://github.com/)
+
+---
+
+## 📌 Aim & Objectives
+
+To design and implement:
+- A stored procedure `transfer_employee(emp_id, new_dept_id)` with input validation and conditional error handling using custom SQLSTATE signals.
+- A **`BEFORE UPDATE`** trigger (`before_employee_salary_update`) for business constraint enforcement (preventing negative salary values).
+- An **`AFTER UPDATE`** trigger (`after_employee_salary_update`) for automated audit logging (`Salary_Audit` tracking history of salary revisions).
+- Thorough verification of successful operations as well as testing of critical edge cases (non-existent employee, non-existent department, negative salary).
+
+---
+
+## 📖 Theory & Core Concepts
+
+1. **Stored Procedures:**
+   - Precompiled SQL routines stored centrally in the database catalog.
+   - Encapsulate business logic, reduce network round-trips, and improve application security through parameterized execution.
+2. **Error Handling & Custom Signaling (`SIGNAL SQLSTATE '45000'`):**
+   - In MySQL, `SQLSTATE '45000'` is reserved for user-defined unhandled exceptions.
+   - When an application constraint fails (e.g., employee or department not found), `SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = '...'` terminates the execution immediately and returns a clean, human-readable error message to the client application.
+3. **Database Triggers:**
+   - Special stored programs invoked automatically by the DBMS engine in response to specific DML events (`INSERT`, `UPDATE`, `DELETE`).
+4. **`BEFORE UPDATE` Triggers:**
+   - Fired *prior* to modifying the underlying table data.
+   - Ideal for **data validation**, sanitization, and defensive programming. Accesses prospective column values via the `NEW` pseudorow. If an invalid value is supplied, the trigger aborts the transaction before any dirty write occurs.
+5. **`AFTER UPDATE` Triggers:**
+   - Fired *after* changes have been successfully staged in the table.
+   - Ideal for **audit trails, history logging**, and cascading notifications. Accesses prior values via `OLD` and updated values via `NEW`.
+6. **Audit Logging Architecture:**
+   - An independent audit relation (`Salary_Audit`) records who/what was modified (`Emp_ID`), previous state (`Old_Salary`), new state (`New_Salary`), and the exact moment of modification (`Changed_At TIMESTAMP`).
+
+---
+
+## 🗄️ Database Design & Schema Architecture
+
+```
++--------------------+            1 : N            +--------------------+
+|     Department     | <-------------------------- |      Employee      |
++--------------------+                             +--------------------+
+| Dept_ID (PK)       |                             | Emp_ID (PK)        |
+| Dept_Name          |                             | Emp_Name           |
++--------------------+                             | Salary             |
+                                                   | Dept_ID (FK)       |
+                                                   +--------------------+
+                                                             |
+                                                     Triggers Audit (1 : N)
+                                                             v
+                                                   +--------------------+
+                                                   |    Salary_Audit    |
+                                                   +--------------------+
+                                                   | Audit_ID (PK, AI)  |
+                                                   | Emp_ID             |
+                                                   | Old_Salary         |
+                                                   | New_Salary         |
+                                                   | Changed_At         |
+                                                   +--------------------+
+```
+
+### Table Specifications
+
+| Table | Primary Key | Foreign Key(s) | Description |
+| :--- | :--- | :--- | :--- |
+| **`Department`** | `Dept_ID` | *None* | Stores department IDs and unit names |
+| **`Employee`** | `Emp_ID` | `Dept_ID` → `Department(Dept_ID)` | Stores employee personal records, salaries, and assigned department |
+| **`Salary_Audit`** | `Audit_ID` | *None* | Automated ledger storing history of employee salary adjustments |
+
+---
+
+## 📁 Experiment 6 Files
+
+```tree
+Experiment-6/
+├── schema_and_data.sql     # Base tables, constraints, audit table & sample records
+├── stored_procedures.sql   # transfer_employee procedure with exception handling
+├── triggers_and_audit.sql  # Salary validation & automated audit logging triggers
+└── complete_experiment6.sql# Unified executable script for Experiment 6
+```
+
+---
+
+## 🚀 Getting Started / Execution Guide (Experiment 6)
+
+### Method 1: Using MySQL Command Line Client
+
+1. Open your terminal inside the repository folder.
+2. Log into MySQL:
+   ```bash
+   mysql -u root -p
+   ```
+3. Run the unified SQL script:
+   ```sql
+   SOURCE Experiment-6/complete_experiment6.sql;
+   ```
+   *Or run modularly:*
+   ```sql
+   SOURCE Experiment-6/schema_and_data.sql;
+   SOURCE Experiment-6/stored_procedures.sql;
+   SOURCE Experiment-6/triggers_and_audit.sql;
+   ```
+
+### Method 2: Using MySQL Workbench
+
+1. Open **MySQL Workbench** and connect to your database instance.
+2. Open `Experiment-6/complete_experiment6.sql`.
+3. Click the ⚡ **Execute (All Queries)** button.
+4. Review the query results and generated audit logs in the output grid.
+
+---
+
+## 📊 Stored Procedure & Triggers Implementation & Output Catalog
+
+### 1. Schema Initialization and Seeding
+
+Creates the base tables and inserts baseline records:
+
+```sql
+INSERT INTO Department (Dept_ID, Dept_Name) VALUES (1, 'Sales'), (2, 'Engineering');
+INSERT INTO Employee (Emp_ID, Emp_Name, Salary, Dept_ID) VALUES (1, 'Alex', 60000.00, 1);
+```
+
+---
+
+### 2. Stored Procedure: `transfer_employee`
+
+Encapsulates department transfer logic with existence verification:
+
+```sql
+DELIMITER $$
+CREATE PROCEDURE transfer_employee(
+    IN p_emp_id INT,
+    IN p_new_dept_id INT
+)
+BEGIN
+    DECLARE emp_count INT DEFAULT 0;
+    DECLARE dept_count INT DEFAULT 0;
+
+    SELECT COUNT(*) INTO emp_count
+    FROM Employee
+    WHERE Emp_ID = p_emp_id;
+
+    SELECT COUNT(*) INTO dept_count
+    FROM Department
+    WHERE Dept_ID = p_new_dept_id;
+
+    IF emp_count = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Employee does not exist';
+    ELSEIF dept_count = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Department does not exist';
+    ELSE
+        UPDATE Employee
+        SET Dept_ID = p_new_dept_id
+        WHERE Emp_ID = p_emp_id;
+    END IF;
+END$$
+DELIMITER ;
+```
+
+#### Test Case 1: Successful Transfer Execution
+Transfer Employee 1 (Alex) from Department 1 (Sales) to Department 2 (Engineering):
+
+```sql
+CALL transfer_employee(1, 2);
+SELECT * FROM Employee WHERE Emp_ID = 1;
+```
+
+**Output:**
+```
++--------+----------+----------+---------+
+| Emp_ID | Emp_Name | Salary   | Dept_ID |
++--------+----------+----------+---------+
+|      1 | Alex     | 60000.00 |       2 |
++--------+----------+----------+---------+
+```
+
+#### Test Case 2: Edge Case — Non-Existent Employee
+```sql
+CALL transfer_employee(666, 2);
+```
+**Output / Error:**
+```
+ERROR 1644 (45000): Employee does not exist
+```
+
+#### Test Case 3: Edge Case — Non-Existent Department
+```sql
+CALL transfer_employee(1, 666);
+```
+**Output / Error:**
+```
+ERROR 1644 (45000): Department does not exist
+```
+
+---
+
+### 3. Business Rule Validation Trigger (`BEFORE UPDATE`)
+
+Guarantees data integrity by intercepting salary updates and rejecting negative amounts:
+
+```sql
+DELIMITER $$
+CREATE TRIGGER before_employee_salary_update
+BEFORE UPDATE ON Employee
+FOR EACH ROW
+BEGIN
+    IF NEW.Salary < 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Salary cannot be negative';
+    END IF;
+END$$
+DELIMITER ;
+```
+
+#### Test Case: Edge Case — Negative Salary Validation
+```sql
+UPDATE Employee SET Salary = -5000 WHERE Emp_ID = 1;
+```
+**Output / Error:**
+```
+ERROR 1644 (45000): Salary cannot be negative
+```
+
+---
+
+### 4. Audit Logging Trigger (`AFTER UPDATE`)
+
+Captures historical salary adjustments to ensure an immutable audit trail:
+
+```sql
+DELIMITER $$
+CREATE TRIGGER after_employee_salary_update
+AFTER UPDATE ON Employee
+FOR EACH ROW
+BEGIN
+    IF OLD.Salary <> NEW.Salary THEN
+        INSERT INTO Salary_Audit (Emp_ID, Old_Salary, New_Salary)
+        VALUES (OLD.Emp_ID, OLD.Salary, NEW.Salary);
+    END IF;
+END$$
+DELIMITER ;
+```
+
+#### Test Case: Valid Salary Adjustment
+Update Alex's salary from ₹60,000 to ₹65,000:
+
+```sql
+UPDATE Employee SET Salary = 65000 WHERE Emp_ID = 1;
+```
+
+#### Verification: Salary Audit Log
+```sql
+SELECT * FROM Salary_Audit;
+```
+**Output:**
+```
++----------+--------+------------+------------+---------------------+
+| Audit_ID | Emp_ID | Old_Salary | New_Salary | Changed_At          |
++----------+--------+------------+------------+---------------------+
+|        1 |      1 |   60000.00 |   65000.00 | 2026-10-16 05:32:46 |
++----------+--------+------------+------------+---------------------+
+```
+
+#### Verification: Employee Current State
+```sql
+SELECT Emp_ID, Emp_Name, Salary
+FROM Employee
+WHERE Emp_ID = 1;
+```
+**Output:**
+```
++--------+----------+----------+
+| Emp_ID | Emp_Name | Salary   |
++--------+----------+----------+
+|      1 | Alex     | 65000.00 |
++--------+----------+----------+
+```
+
+---
+
+## 💡 Important Observations
+
+- **Atomic Validation:** Validations inside stored procedures prevent partial or invalid transactions from touching database state.
+- **SQLSTATE 45000:** Using standard custom state `45000` allows client software to distinguish business rule violations from internal database hardware/syntax faults.
+- **BEFORE vs AFTER:** `BEFORE` triggers are ideal for validation because aborting them stops the transaction without executing writes; `AFTER` triggers ensure audit logging only occurs when the base update has succeeded.
+- **Change Detection:** Checking `IF OLD.Salary <> NEW.Salary THEN` avoids writing redundant audit entries if an update statement runs without modifying the salary value.
+
+---
+
+## 📈 Experiment 6 Results & Conclusion
+
+The stored procedure `transfer_employee` and triggers `before_employee_salary_update` and `after_employee_salary_update` were successfully implemented and verified on MySQL. Input validation and custom error handling correctly blocked invalid operations (non-existent employee, non-existent department, and negative salary) with user-friendly messages via `SQLSTATE '45000'`. Valid departmental transfers and salary revisions succeeded, and all salary modifications were recorded in the `Salary_Audit` table.
