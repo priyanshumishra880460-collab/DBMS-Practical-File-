@@ -20,6 +20,7 @@ A structured laboratory repository containing practical experiments, relational 
 | **06** | **Stored Procedures, Triggers & Audit Logging** | [`📁 Experiment-6`](./Experiment-6) | ✅ Completed |
 | **07** | **Database Normalization (UNF to 1NF, 2NF, 3NF & BCNF)** | [`📁 Experiment-7`](./Experiment-7) | ✅ Completed |
 | **08** | **Banking Transactions, Savepoints & Concurrency Control** | [`📁 Experiment-8`](./Experiment-8) | ✅ Completed |
+| **09** | **B-Tree Indexing, Composite Indexes & Query Optimization** | [`📁 Experiment-9`](./Experiment-9) | ✅ Completed |
 
 ---
 
@@ -65,12 +66,18 @@ DBMS-Practical-File-/
 │   ├── 03_3nf_and_bcnf.sql     # 3NF/BCNF decomposition eliminating transitive dependencies
 │   ├── 04_verification_lossless_and_fd.sql # Lossless join & dependency preservation tests
 │   └── complete_experiment7.sql# Unified executable all-in-one script
-└── Experiment-8/               # Experiment 8: Transactions, Savepoints & Concurrency
-    ├── 01_banking_schema_and_commit.sql # Accounts schema & BEGIN/COMMIT transfer
-    ├── 02_rollback_and_savepoint.sql    # Full ROLLBACK & SAVEPOINT partial rollback
-    ├── 03_partial_failure_simulation.sql# Simulated invalid transfer & atomicity rollback
-    ├── 04_isolation_levels_and_concurrency.sql # Isolation levels & 2-session anomaly
-    └── complete_experiment8.sql         # Unified executable all-in-one script
+├── Experiment-8/               # Experiment 8: Transactions, Savepoints & Concurrency
+│   ├── 01_banking_schema_and_commit.sql # Accounts schema & BEGIN/COMMIT transfer
+│   ├── 02_rollback_and_savepoint.sql    # Full ROLLBACK & SAVEPOINT partial rollback
+│   ├── 03_partial_failure_simulation.sql# Simulated invalid transfer & atomicity rollback
+│   ├── 04_isolation_levels_and_concurrency.sql # Isolation levels & 2-session anomaly
+│   └── complete_experiment8.sql         # Unified executable all-in-one script
+└── Experiment-9/               # Experiment 9: B-Tree Indexing & Query Optimization
+    ├── 01_schema_and_data_generation.sql # 5K records procedural generation
+    ├── 02_single_column_index.sql        # Single-column index & EXPLAIN comparison
+    ├── 03_composite_index.sql            # Composite index & EXPLAIN comparison
+    ├── 04_performance_benchmarking.sql   # Index inspection & benchmark queries
+    └── complete_experiment9.sql          # Unified executable all-in-one script
 ```
 
 ---
@@ -2958,5 +2965,269 @@ COMMIT;
 ## 📈 Experiment 8 Results & Conclusion
 
 Banking transactions adhering to ACID properties were successfully implemented and verified. Atomic balance transfers were committed using `START TRANSACTION` and `COMMIT`, and invalid operations were rolled back using `ROLLBACK`. The use of `SAVEPOINT` permitted selective partial rollbacks without abandoning preceding valid work. Transaction isolation levels (`READ COMMITTED`, `REPEATABLE READ`, and `SERIALIZABLE`) were configured, and concurrent execution behavior across multiple database sessions was demonstrated and validated.
+
+---
+
+# 🔬 Experiment 9: B-Tree Indexing, Composite Indexes and Query Optimization with EXPLAIN
+
+[![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Database](https://img.shields.io/badge/Database-RailwayDB-005C84?style=for-the-badge&logo=databricks&logoColor=white)](https://github.com/)
+
+---
+
+## 📌 Aim & Objectives
+
+To design and implement a high-volume **Railway Booking System** database with 5,000 records, benchmark data retrieval performance, and analyze query execution plans using **`EXPLAIN`**:
+1. **Procedural Data Synthesis:** Populating at least 5,000 synthetic ticket bookings using an iterative MySQL stored procedure (`InsertBookings`).
+2. **Baseline Query Analysis (Unindexed):** Evaluating the execution cost and full table scan (`ALL`) overhead of unindexed queries.
+3. **Single-Column Indexing:** Creating a B-Tree index on `Train_No` (`idx_train`) and measuring the reduction in examined rows (`rows` reduced from ~5000 to ~250).
+4. **Composite (Multi-Column) Indexing:** Creating a composite B-Tree index on `(Train_No, Journey_Date)` (`idx_train_date`) to optimize multi-attribute filtering down to a single row lookup (`rows = 1`).
+5. **Execution Plan Metrics Comparison:** Comparing access types (`ALL` vs `ref`), `key_len` byte allocations, and filtering efficiency.
+
+---
+
+## 📖 Theory & Core Concepts
+
+Database indexes are specialized auxiliary data structures (predominantly **B-Trees** in MySQL InnoDB) that dramatically accelerate data retrieval operations at the cost of slight write overhead.
+
+### 1. Clustered vs Secondary Indexes
+- **Clustered Index:** The physical table organization in MySQL InnoDB. The leaf pages of the clustered index contain the actual data rows, ordered by the Primary Key (`Booking_ID`).
+- **Secondary (Non-Clustered) Index:** An auxiliary B-Tree index whose leaf nodes store the indexed key values along with a pointer to the clustered index primary key.
+
+### 2. Single-Column vs Composite Indexes
+- **Single-Column Index (`idx_train` on `Train_No`):** Indexes a single attribute. Best for queries filtering solely by that attribute.
+- **Composite Index (`idx_train_date` on `(Train_No, Journey_Date)`):** Indexes multiple columns in a specified left-to-right hierarchy.
+  - **Leftmost Prefix Rule:** A composite index `(A, B)` can satisfy queries filtering on `(A)` or `(A, B)`, but cannot independently satisfy queries filtering solely on `(B)` without `A`.
+
+### 3. Key `EXPLAIN` Performance Metrics
+
+| Metric | Full Table Scan (Baseline) | Single-Column Index | Composite Index |
+| :--- | :---: | :---: | :---: |
+| **`type` (Access Method)** | `ALL` (Slowest) | `ref` (Indexed Lookup) | `ref` (Indexed Lookup) |
+| **`key` (Index Used)** | `NULL` | `idx_train` | `idx_train_date` |
+| **`key_len` (Index Length)**| `NULL` | `5` bytes | `9` bytes |
+| **`rows` (Estimated Scanned)**| **4,961 - 5,000** | **250** | **1** |
+| **Performance Factor** | $1\times$ (Baseline) | **$20\times$ Faster** | **$5,000\times$ Faster** |
+
+*Key Length Calculation Details:*
+- `Train_No`: `INT` (4 bytes) + 1 byte for `NULL` indicator = **5 bytes**
+- `Journey_Date`: `DATE` (3 bytes) + 1 byte for `NULL` indicator = 4 bytes
+- Combined `key_len` for `(Train_No, Journey_Date)` = $5 + 4 =$ **9 bytes**
+
+---
+
+## 📁 Experiment 9 Files
+
+```tree
+Experiment-9/
+├── 01_schema_and_data_generation.sql   # Railway schema & 5,000 records procedural synthesis
+├── 02_single_column_index.sql          # Single index creation & EXPLAIN benchmark
+├── 03_composite_index.sql              # Composite index creation & EXPLAIN benchmark
+├── 04_performance_benchmarking.sql     # Index metadata inspection & benchmark queries
+└── complete_experiment9.sql            # Unified executable script for entire Experiment 9
+```
+
+---
+
+## 🚀 Getting Started / Execution Guide (Experiment 9)
+
+### Method 1: Using MySQL Command Line Client
+
+1. Open your terminal in the repository root directory.
+2. Log into MySQL:
+   ```bash
+   mysql -u root -p
+   ```
+3. Run the complete unified script:
+   ```sql
+   SOURCE Experiment-9/complete_experiment9.sql;
+   ```
+   *Or execute step-by-step:*
+   ```sql
+   SOURCE Experiment-9/01_schema_and_data_generation.sql;
+   SOURCE Experiment-9/02_single_column_index.sql;
+   SOURCE Experiment-9/03_composite_index.sql;
+   SOURCE Experiment-9/04_performance_benchmarking.sql;
+   ```
+
+### Method 2: Using MySQL Workbench
+
+1. Open **MySQL Workbench** and connect to your database instance.
+2. Open `Experiment-9/complete_experiment9.sql`.
+3. Click the ⚡ **Execute (All Queries)** button. Note that bulk inserting 5,000 records may take 2-5 seconds.
+
+---
+
+## 📊 Step-by-Step SQL Implementation
+
+### 1. Creating Table & Populating 5,000 Bookings
+```sql
+CREATE DATABASE IF NOT EXISTS RailwayDB;
+USE RailwayDB;
+
+CREATE TABLE Railway_Booking (
+    Booking_ID INT PRIMARY KEY,
+    Passenger_Name VARCHAR(50),
+    Train_No INT,
+    Source VARCHAR(50),
+    Destination VARCHAR(50),
+    Journey_Date DATE,
+    Seat_No INT,
+    Fare DECIMAL(10, 2)
+);
+
+DELIMITER $$
+CREATE PROCEDURE InsertBookings()
+BEGIN
+    DECLARE i INT DEFAULT 1;
+    WHILE i <= 5000 DO
+        INSERT INTO Railway_Booking VALUES (
+            i,
+            CONCAT('Passenger_', i),
+            12000 + (i % 20),
+            'Delhi',
+            'Lucknow',
+            DATE_ADD('2026-01-01', INTERVAL (i % 365) DAY),
+            i % 100,
+            500 + (i % 1500)
+        );
+        SET i = i + 1;
+    END WHILE;
+END$$
+DELIMITER ;
+
+CALL InsertBookings();
+
+SELECT * FROM Railway_Booking LIMIT 10;
+```
+
+---
+
+### 2. Query Before Indexing (Baseline)
+```sql
+EXPLAIN SELECT * FROM Railway_Booking
+WHERE Train_No = 12005;
+```
+
+---
+
+### 3. Creating Single-Column Index & Benchmarking
+```sql
+CREATE INDEX idx_train
+ON Railway_Booking(Train_No);
+
+EXPLAIN SELECT * FROM Railway_Booking
+WHERE Train_No = 12005;
+```
+
+---
+
+### 4. Creating Composite Index & Benchmarking
+```sql
+CREATE INDEX idx_train_date
+ON Railway_Booking(Train_No, Journey_Date);
+
+EXPLAIN SELECT * FROM Railway_Booking
+WHERE Train_No = 12005
+AND Journey_Date = '2026-03-15';
+```
+
+---
+
+### 5. Performance Comparison Queries
+```sql
+-- Single Column Lookup
+SELECT * FROM Railway_Booking
+WHERE Train_No = 12005;
+
+-- Composite Pin-point Lookup
+SELECT * FROM Railway_Booking
+WHERE Train_No = 12005
+AND Journey_Date = '2026-03-15';
+```
+
+---
+
+## 📋 Expected Outputs & Execution Verification
+
+### 1. Original Railway Booking Table (Sample 9 Records)
+```
++------------+----------------+----------+--------+-------------+--------------+---------+--------+
+| Booking_ID | Passenger_Name | Train_No | Source | Destination | Journey_Date | Seat_No | Fare   |
++------------+----------------+----------+--------+-------------+--------------+---------+--------+
+|          1 | Passenger_1    |    12001 | Delhi  | Lucknow     | 2026-01-02   |       1 | 501.00 |
+|          2 | Passenger_2    |    12002 | Delhi  | Lucknow     | 2026-01-03   |       2 | 502.00 |
+|          3 | Passenger_3    |    12003 | Delhi  | Lucknow     | 2026-01-04   |       3 | 503.00 |
+|          4 | Passenger_4    |    12004 | Delhi  | Lucknow     | 2026-01-05   |       4 | 504.00 |
+|          5 | Passenger_5    |    12005 | Delhi  | Lucknow     | 2026-01-06   |       5 | 505.00 |
+|          6 | Passenger_6    |    12006 | Delhi  | Lucknow     | 2026-01-07   |       6 | 506.00 |
+|          7 | Passenger_7    |    12007 | Delhi  | Lucknow     | 2026-01-08   |       7 | 507.00 |
+|          8 | Passenger_8    |    12008 | Delhi  | Lucknow     | 2026-01-09   |       8 | 508.00 |
+|          9 | Passenger_9    |    12009 | Delhi  | Lucknow     | 2026-01-10   |       9 | 509.00 |
++------------+----------------+----------+--------+-------------+--------------+---------+--------+
+```
+
+### 2. Execution Plan Before Indexing (Full Table Scan)
+```
++----+-------------+-----------------+------------+------+---------------+------+---------+------+------+----------+-------------+
+| id | select_type | table           | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra       |
++----+-------------+-----------------+------------+------+---------------+------+---------+------+------+----------+-------------+
+|  1 | SIMPLE      | Railway_Booking | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 4961 |    10.00 | Using where |
++----+-------------+-----------------+------------+------+---------------+------+---------+------+------+----------+-------------+
+```
+*(Analysis: Without an index, the query engine performs a full table scan `type = ALL` evaluating nearly all 5,000 records).*
+
+### 3. Execution Plan with Single Column Index (`idx_train`)
+```
++----+-------------+-----------------+------------+------+---------------+-----------+---------+-------+------+----------+-------+
+| id | select_type | table           | partitions | type | possible_keys | key       | key_len | ref   | rows | filtered | Extra |
++----+-------------+-----------------+------------+------+---------------+-----------+---------+-------+------+----------+-------+
+|  1 | SIMPLE      | Railway_Booking | NULL       | ref  | idx_train     | idx_train | 5       | const |  250 |   100.00 | NULL  |
++----+-------------+-----------------+------------+------+---------------+-----------+---------+-------+------+----------+-------+
+```
+*(Analysis: Access type improved to `ref`. Only the 250 rows matching Train 12005 are scanned instead of 5,000 rows).*
+
+### 4. Execution Plan with Composite Index (`idx_train_date`)
+```
++----+-------------+-----------------+------------+------+--------------------------+----------------+---------+-------------+------+----------+-------+
+| id | select_type | table           | partitions | type | possible_keys            | key            | key_len | ref         | rows | filtered | Extra |
++----+-------------+-----------------+------------+------+--------------------------+----------------+---------+-------------+------+----------+-------+
+|  1 | SIMPLE      | Railway_Booking | NULL       | ref  | idx_train,idx_train_date | idx_train_date | 9       | const,const |    1 |   100.00 | NULL  |
++----+-------------+-----------------+------------+------+--------------------------+----------------+---------+-------------+------+----------+-------+
+```
+*(Analysis: Evaluated rows dropped to **1**. Both `Train_No` and `Journey_Date` are matched in the B-Tree index, achieving $O(\log N)$ pin-point efficiency).*
+
+### 5. Performance Comparison Query Results (`Train_No = 12005`)
+```
++------------+----------------+----------+--------+-------------+--------------+---------+--------+
+| Booking_ID | Passenger_Name | Train_No | Source | Destination | Journey_Date | Seat_No | Fare   |
++------------+----------------+----------+--------+-------------+--------------+---------+--------+
+|          5 | Passenger_5    |    12005 | Delhi  | Lucknow     | 2026-01-06   |       5 | 505.00 |
+|         25 | Passenger_25   |    12005 | Delhi  | Lucknow     | 2026-01-26   |      25 | 525.00 |
+|         45 | Passenger_45   |    12005 | Delhi  | Lucknow     | 2026-02-15   |      45 | 545.00 |
+|         65 | Passenger_65   |    12005 | Delhi  | Lucknow     | 2026-03-07   |      65 | 565.00 |
+|         85 | Passenger_85   |    12005 | Delhi  | Lucknow     | 2026-03-27   |      85 | 585.00 |
+|        105 | Passenger_105  |    12005 | Delhi  | Lucknow     | 2026-04-16   |       5 | 605.00 |
+|        125 | Passenger_125  |    12005 | Delhi  | Lucknow     | 2026-05-06   |      25 | 625.00 |
+|        145 | Passenger_145  |    12005 | Delhi  | Lucknow     | 2026-05-26   |      45 | 645.00 |
+|        165 | Passenger_165  |    12005 | Delhi  | Lucknow     | 2026-06-15   |      65 | 665.00 |
++------------+----------------+----------+--------+-------------+--------------+---------+--------+
+```
+
+---
+
+## 💡 Important Observations
+
+- **Massive Row Scan Reductions:** Creating single-column and composite B-Tree indexes reduced evaluated rows from **5,000** down to **250** and finally to **1**, reducing disk I/O exponentially.
+- **Index Selectivity:** The more selective an index column is (higher cardinality), the greater the performance benefit.
+- **Composite Index Ordering:** Order of columns in composite indexes matters. `(Train_No, Journey_Date)` works for `WHERE Train_No = ?` and `WHERE Train_No = ? AND Journey_Date = ?`, but not for `WHERE Journey_Date = ?` alone.
+- **Write Trade-Off:** While indexes accelerate `SELECT` operations, each additional index incurs maintenance cost during `INSERT`, `UPDATE`, and `DELETE` operations.
+
+---
+
+## 📈 Experiment 9 Results & Conclusion
+
+A high-volume railway booking dataset containing 5,000 records was generated via stored procedure. Query execution performance was systematically benchmarked before and after creating single-column (`idx_train`) and composite (`idx_train_date`) B-Tree indexes. Execution plans compared via `EXPLAIN` demonstrated a transition from an unindexed full table scan (`type = ALL`, ~5000 rows) to index lookups (`type = ref`), culminating in a near-instantaneous single-row retrieval (`rows = 1`) under composite indexing.
+
 
 
