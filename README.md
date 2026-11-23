@@ -21,6 +21,7 @@ A structured laboratory repository containing practical experiments, relational 
 | **07** | **Database Normalization (UNF to 1NF, 2NF, 3NF & BCNF)** | [`📁 Experiment-7`](./Experiment-7) | ✅ Completed |
 | **08** | **Banking Transactions, Savepoints & Concurrency Control** | [`📁 Experiment-8`](./Experiment-8) | ✅ Completed |
 | **09** | **B-Tree Indexing, Composite Indexes & Query Optimization** | [`📁 Experiment-9`](./Experiment-9) | ✅ Completed |
+| **10** | **Query Optimization, Indexing Strategies & Query Rewriting** | [`📁 Experiment-10`](./Experiment-10) | ✅ Completed |
 
 ---
 
@@ -72,12 +73,18 @@ DBMS-Practical-File-/
 │   ├── 03_partial_failure_simulation.sql# Simulated invalid transfer & atomicity rollback
 │   ├── 04_isolation_levels_and_concurrency.sql # Isolation levels & 2-session anomaly
 │   └── complete_experiment8.sql         # Unified executable all-in-one script
-└── Experiment-9/               # Experiment 9: B-Tree Indexing & Query Optimization
-    ├── 01_schema_and_data_generation.sql # 5K records procedural generation
-    ├── 02_single_column_index.sql        # Single-column index & EXPLAIN comparison
-    ├── 03_composite_index.sql            # Composite index & EXPLAIN comparison
-    ├── 04_performance_benchmarking.sql   # Index inspection & benchmark queries
-    └── complete_experiment9.sql          # Unified executable all-in-one script
+├── Experiment-9/               # Experiment 9: B-Tree Indexing & Query Optimization
+│   ├── 01_schema_and_data_generation.sql # 5K records procedural generation
+│   ├── 02_single_column_index.sql        # Single-column index & EXPLAIN comparison
+│   ├── 03_composite_index.sql            # Composite index & EXPLAIN comparison
+│   ├── 04_performance_benchmarking.sql   # Index inspection & benchmark queries
+│   └── complete_experiment9.sql          # Unified executable all-in-one script
+└── Experiment-10/              # Experiment 10: Query Optimization & Indexing Strategies
+    ├── 01_dataset_generation_10k.sql     # 10K records procedural generation
+    ├── 02_five_slow_queries_unindexed.sql# 5 slow queries before optimization (EXPLAIN)
+    ├── 03_indexing_and_optimized_explain.sql # Single & composite indexes + optimized EXPLAIN
+    ├── 04_query_rewriting_sargable.sql   # SARGable query rewriting (Year vs Date range)
+    └── complete_experiment10.sql         # Unified executable all-in-one script
 ```
 
 ---
@@ -3228,6 +3235,278 @@ AND Journey_Date = '2026-03-15';
 ## 📈 Experiment 9 Results & Conclusion
 
 A high-volume railway booking dataset containing 5,000 records was generated via stored procedure. Query execution performance was systematically benchmarked before and after creating single-column (`idx_train`) and composite (`idx_train_date`) B-Tree indexes. Execution plans compared via `EXPLAIN` demonstrated a transition from an unindexed full table scan (`type = ALL`, ~5000 rows) to index lookups (`type = ref`), culminating in a near-instantaneous single-row retrieval (`rows = 1`) under composite indexing.
+
+---
+
+# 🔬 Experiment 10: Query Optimization, Indexing Strategies and Query Rewriting on 10,000 Records
+
+[![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Database](https://img.shields.io/badge/Database-EnterpriseDB-005C84?style=for-the-badge&logo=databricks&logoColor=white)](https://github.com/)
+
+---
+
+## 📌 Aim & Objectives
+
+To design and benchmark enterprise database workloads on a synthetic dataset of at least **10,000 employee records**:
+1. **Procedural Dataset Generation:** Generating 10,000 multi-attribute rows (`Emp_ID`, `Emp_Name`, `Department`, `City`, `Salary`, `Joining_Date`) with pseudo-random distributions using `ELT()` and mathematical modulo operations.
+2. **Identification of Slow Queries:** Formulating five representative unindexed queries (filtering by equality, range, multi-attribute combinations, and sorting) and diagnosing bottlenecks with **`EXPLAIN`**.
+3. **Index Optimization (Single & Composite):** Designing single-column (`idx_department`, `idx_city`, `idx_salary`) and composite (`idx_dept_city`, `idx_dept_salary`) B-Tree indexes to convert full table scans into index seeks.
+4. **Eliminating Sort Overhead (`Using filesort`):** Using composite index ordering to satisfy `ORDER BY Salary DESC` directly from B-Tree leaf pages without invoking disk/memory filesort buffers.
+5. **SARGable Query Rewriting:** Eliminating non-SARGable column-wrapping functions (`YEAR(Joining_Date) = 2022`) by rewriting into half-open date range comparisons (`Joining_Date >= '2022-01-01' AND Joining_Date < '2023-01-01'`) to enable index range scans.
+
+---
+
+## 📖 Theory & Core Concepts
+
+Database query optimization relies on cost-based estimations to choose the most efficient physical execution path.
+
+### 1. Index Access Paths in MySQL
+- **`ALL` (Full Table Scan):** The engine reads every data page from storage. Unindexed queries on large tables suffer linear time complexity $O(N)$ and heavy disk I/O.
+- **`range` (Index Range Scan):** The optimizer traverses the B-Tree to find the lower bound, then scans along the leaf node linked list until the upper bound is reached.
+- **`ref` (Index Lookup):** Matches a constant value against a non-unique B-Tree index in $O(\log N)$ time.
+
+### 2. SARGable vs Non-SARGable Predicates
+- **SARGable (Search Argument Able):** A condition structured so that the database engine can directly exploit an index (e.g., `col >= val1 AND col < val2`).
+- **Non-SARGable:** Any predicate where the indexed column is enclosed inside a function, mathematical expression, or implicit type conversion (e.g., `YEAR(Joining_Date) = 2022`, `UPPER(City) = 'DELHI'`). Because the database cannot predict function outputs across the B-Tree in advance, it is forced to abandon the index and evaluate the function for all 10,000 rows.
+
+### 3. Sorting Optimization (`ORDER BY` without Filesort)
+When a query combines a filter and a sort (`WHERE Department = 'HR' ORDER BY Salary DESC`), creating a composite index on `(Department, Salary)` allows the engine to locate all `'HR'` records in the index and read them out in pre-sorted order, entirely eliminating the expensive `Using filesort` step.
+
+---
+
+## 📁 Experiment 10 Files
+
+```tree
+Experiment-10/
+├── 01_dataset_generation_10k.sql         # Employees schema & 10,000 records procedural synthesis
+├── 02_five_slow_queries_unindexed.sql    # 5 slow queries baseline diagnosis with EXPLAIN
+├── 03_indexing_and_optimized_explain.sql # Single & composite indexes + optimized EXPLAIN plans
+├── 04_query_rewriting_sargable.sql       # SARGable query rewriting & date index range scan
+└── complete_experiment10.sql             # Unified executable script for entire Experiment 10
+```
+
+---
+
+## 🚀 Getting Started / Execution Guide (Experiment 10)
+
+### Method 1: Using MySQL Command Line Client
+
+1. Open your terminal in the repository root directory.
+2. Log into MySQL:
+   ```bash
+   mysql -u root -p
+   ```
+3. Run the complete unified script:
+   ```sql
+   SOURCE Experiment-10/complete_experiment10.sql;
+   ```
+   *Or execute step-by-step:*
+   ```sql
+   SOURCE Experiment-10/01_dataset_generation_10k.sql;
+   SOURCE Experiment-10/02_five_slow_queries_unindexed.sql;
+   SOURCE Experiment-10/03_indexing_and_optimized_explain.sql;
+   SOURCE Experiment-10/04_query_rewriting_sargable.sql;
+   ```
+
+### Method 2: Using MySQL Workbench
+
+1. Open **MySQL Workbench** and connect to your database instance.
+2. Open `Experiment-10/complete_experiment10.sql`.
+3. Click the ⚡ **Execute (All Queries)** button. (Bulk generation of 10,000 rows takes ~3-8 seconds).
+
+---
+
+## 📊 Step-by-Step SQL Implementation
+
+### 1. Creating Table & Populating 10,000 Records
+```sql
+CREATE DATABASE IF NOT EXISTS EnterpriseDB;
+USE EnterpriseDB;
+
+CREATE TABLE Employees (
+    Emp_ID INT PRIMARY KEY,
+    Emp_Name VARCHAR(50),
+    Department VARCHAR(30),
+    City VARCHAR(30),
+    Salary DECIMAL(10, 2),
+    Joining_Date DATE
+);
+
+DELIMITER $$
+CREATE PROCEDURE GenerateEmployees()
+BEGIN
+    DECLARE i INT DEFAULT 1;
+    WHILE i <= 10000 DO
+        INSERT INTO Employees VALUES (
+            i,
+            CONCAT('Employee_', i),
+            ELT((i % 5) + 1, 'IT', 'HR', 'Sales', 'Finance', 'Marketing'),
+            ELT((i % 4) + 1, 'Delhi', 'Mumbai', 'Lucknow', 'Pune'),
+            20000 + (i % 50000),
+            DATE_ADD('2020-01-01', INTERVAL (i % 2000) DAY)
+        );
+        SET i = i + 1;
+    END WHILE;
+END$$
+DELIMITER ;
+
+CALL GenerateEmployees();
+
+SELECT COUNT(*) AS Total_Records FROM Employees;
+```
+
+---
+
+### 2. Five Slow Queries (Before Optimization - Unindexed)
+```sql
+-- Query 1: Search by Department
+EXPLAIN SELECT * FROM Employees WHERE Department = 'IT';
+
+-- Query 2: Search by City
+EXPLAIN SELECT * FROM Employees WHERE City = 'Delhi';
+
+-- Query 3: Salary Filtering (Range Query)
+EXPLAIN SELECT * FROM Employees WHERE Salary > 50000;
+
+-- Query 4: Multiple Conditions (Department + City)
+EXPLAIN SELECT * FROM Employees WHERE Department = 'Sales' AND City = 'Mumbai';
+
+-- Query 5: Sorting and Filtering (Filesort)
+EXPLAIN SELECT * FROM Employees WHERE Department = 'HR' ORDER BY Salary DESC;
+```
+
+---
+
+### 3. Creating Optimization Indexes
+```sql
+-- Single Column Indexes
+CREATE INDEX idx_department ON Employees(Department);
+CREATE INDEX idx_city ON Employees(City);
+CREATE INDEX idx_salary ON Employees(Salary);
+
+-- Composite Indexes
+CREATE INDEX idx_dept_city ON Employees(Department, City);
+CREATE INDEX idx_dept_salary ON Employees(Department, Salary);
+```
+
+---
+
+### 4. Five Optimized Queries (After Indexing)
+```sql
+-- Optimized Query 1: Single index on Department
+EXPLAIN SELECT * FROM Employees WHERE Department = 'IT';
+
+-- Optimized Query 2: Single index on City
+EXPLAIN SELECT * FROM Employees WHERE City = 'Delhi';
+
+-- Optimized Query 3: Range scan on Salary
+EXPLAIN SELECT * FROM Employees WHERE Salary > 50000;
+
+-- Optimized Query 4: Composite index lookup on Department & City
+EXPLAIN SELECT * FROM Employees WHERE Department = 'Sales' AND City = 'Mumbai';
+
+-- Optimized Query 5: Composite index lookup avoiding filesort
+EXPLAIN SELECT * FROM Employees WHERE Department = 'HR' ORDER BY Salary DESC;
+```
+
+---
+
+### 5. SARGable Query Rewriting Optimization
+```sql
+-- Add index on Date column
+CREATE INDEX idx_joining_date ON Employees(Joining_Date);
+
+-- Non-SARGable Query (Before: Full Table Scan despite index)
+EXPLAIN SELECT * FROM Employees
+WHERE YEAR(Joining_Date) = 2022;
+
+-- SARGable Query (After: Uses Index Range Scan on idx_joining_date)
+EXPLAIN SELECT * FROM Employees
+WHERE Joining_Date >= '2022-01-01'
+AND Joining_Date < '2023-01-01';
+```
+
+---
+
+## 📋 Expected Outputs & Execution Verification
+
+### 1. Generated Employee Dataset (Sample 9 Records)
+```
++--------+------------+------------+---------+----------+--------------+
+| Emp_ID | Emp_Name   | Department | City    | Salary   | Joining_Date |
++--------+------------+------------+---------+----------+--------------+
+|      1 | Employee_1 | HR         | Mumbai  | 20001.00 | 2020-01-02   |
+|      2 | Employee_2 | Sales      | Lucknow | 20002.00 | 2020-01-03   |
+|      3 | Employee_3 | Finance    | Pune    | 20003.00 | 2020-01-04   |
+|      4 | Employee_4 | Marketing  | Delhi   | 20004.00 | 2020-01-05   |
+|      5 | Employee_5 | IT         | Mumbai  | 20005.00 | 2020-01-06   |
+|      6 | Employee_6 | HR         | Lucknow | 20006.00 | 2020-01-07   |
+|      7 | Employee_7 | Sales      | Pune    | 20007.00 | 2020-01-08   |
+|      8 | Employee_8 | Finance    | Delhi   | 20008.00 | 2020-01-09   |
+|      9 | Employee_9 | Marketing  | Mumbai  | 20009.00 | 2020-01-10   |
++--------+------------+------------+---------+----------+--------------+
+```
+
+### 2. Five Slow Queries — Before Optimization (`EXPLAIN`)
+```
++----+-------------+-----------+------------+------+---------------+------+---------+------+------+----------+-----------------------------+
+| id | select_type | table     | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra                       |
++----+-------------+-----------+------------+------+---------------+------+---------+------+------+----------+-----------------------------+
+|  1 | SIMPLE      | Employees | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 9948 |    10.00 | Using where                 |
+|  1 | SIMPLE      | Employees | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 9948 |    10.00 | Using where                 |
+|  1 | SIMPLE      | Employees | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 9948 |    33.33 | Using where                 |
+|  1 | SIMPLE      | Employees | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 9948 |     1.00 | Using where                 |
+|  1 | SIMPLE      | Employees | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 9948 |    10.00 | Using where; Using filesort |
++----+-------------+-----------+------------+------+---------------+------+---------+------+------+----------+-----------------------------+
+```
+*(Every single query resulted in a full table scan `type = ALL` evaluating 9,948 ~ 10,000 rows. Query 5 incurred an expensive `Using filesort`).*
+
+### 3. Five Optimized Queries — After Optimization (`EXPLAIN`)
+```
++----+-------------+-----------+------------+-------+----------------------------------------------------+-----------------+---------+-------------+------+----------+-----------------------+
+| id | select_type | table     | partitions | type  | possible_keys                                      | key             | key_len | ref         | rows | filtered | Extra                 |
++----+-------------+-----------+------------+-------+----------------------------------------------------+-----------------+---------+-------------+------+----------+-----------------------+
+|  1 | SIMPLE      | Employees | NULL       | ref   | idx_department,idx_dept_city,idx_dept_salary       | idx_department  | 123     | const       | 2000 |   100.00 | NULL                  |
+|  1 | SIMPLE      | Employees | NULL       | ref   | idx_city                                           | idx_city        | 123     | const       | 2500 |   100.00 | NULL                  |
+|  1 | SIMPLE      | Employees | NULL       | range | idx_salary                                         | idx_salary      | 6       | NULL        |    1 |   100.00 | Using index condition |
+|  1 | SIMPLE      | Employees | NULL       | ref   | idx_department,idx_city,idx_dept_city,idx_dept_... | idx_dept_city   | 246     | const,const |  500 |   100.00 | NULL                  |
+|  1 | SIMPLE      | Employees | NULL       | ref   | idx_department,idx_dept_city,idx_dept_salary       | idx_dept_salary | 123     | const       | 2000 |   100.00 | NULL                  |
++----+-------------+-----------+------------+-------+----------------------------------------------------+-----------------+---------+-------------+------+----------+-----------------------+
+```
+
+### 4. Query Rewriting Comparison Results (Year 2022)
+```
++--------+--------------+------------+---------+----------+--------------+
+| Emp_ID | Emp_Name     | Department | City    | Salary   | Joining_Date |
++--------+--------------+------------+---------+----------+--------------+
+|    731 | Employee_731 | HR         | Pune    | 20731.00 | 2022-01-01   |
+|    732 | Employee_732 | Sales      | Delhi   | 20732.00 | 2022-01-02   |
+|    733 | Employee_733 | Finance    | Mumbai  | 20733.00 | 2022-01-03   |
+|    734 | Employee_734 | Marketing  | Lucknow | 20734.00 | 2022-01-04   |
+|    735 | Employee_735 | IT         | Pune    | 20735.00 | 2022-01-05   |
+|    736 | Employee_736 | HR         | Delhi   | 20736.00 | 2022-01-06   |
+|    737 | Employee_737 | Sales      | Mumbai  | 20737.00 | 2022-01-07   |
+|    738 | Employee_738 | Finance    | Lucknow | 20738.00 | 2022-01-08   |
+|    739 | Employee_739 | Marketing  | Pune    | 20739.00 | 2022-01-09   |
++--------+--------------+------------+---------+----------+--------------+
+```
+*(Both queries return identical result sets, but the rewritten SARGable query utilizes `idx_joining_date` via index range scan instead of full table scanning 10,000 rows).*
+
+---
+
+## 💡 Important Observations
+
+- **Comprehensive Optimization:** Query performance cannot rely solely on adding indexes; queries must be written in a **SARGable** format so the query optimizer can utilize those indexes.
+- **Filesort Elimination:** Composite indexes matching both the filter predicate and the sort column (`idx_dept_salary`) eliminate memory-intensive sort operations (`Using filesort`), yielding orders-of-magnitude faster response times.
+- **Index Selectivity & Cardinality:** When combining columns in composite indexes, placing the equality predicate column first (`Department`) followed by range or sort columns (`Salary`) satisfies the leftmost prefix requirement.
+- **Cost-Based Decisions:** The optimizer chooses indexes only when the estimated cost is lower than a table scan; if a query matches >30-40% of a table, MySQL may deliberately select a sequential table scan.
+
+---
+
+## 📈 Experiment 10 Results & Conclusion
+
+A large-scale enterprise dataset of 10,000 employee records was successfully generated and benchmarked. Five slow queries characterized by full table scans (`type = ALL`) and sort buffer overheads (`Using filesort`) were diagnosed using `EXPLAIN`. Single-column and composite B-Tree indexes were created, improving access types to `ref` and `range` and drastically reducing scanned rows (from ~10,000 to 500 or fewer). Finally, SARGable query rewriting demonstrated how replacing function-wrapped expressions with range comparisons unlocks index usage and achieves optimal query performance.
+
 
 
 
