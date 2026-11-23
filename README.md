@@ -12,15 +12,15 @@ A structured laboratory repository containing practical experiments, relational 
 
 | Exp No. | Experiment Title | Folder / Code | Status |
 | :---: | :--- | :---: | :---: |
-| **01** | **Indian E-Commerce Platform ER Modeling** | [`📁 Experiment-1`](./Experiment-1) | ✅ Completed |
-| **02** | **ER Diagram to Relational Schema & Integrity Constraints** | [`📁 Experiment-2`](./Experiment-2) | ✅ Completed |
-| **03** | **Employee–Department–Project Schema** | [`📁 Experiment-3`](./Experiment-3) | ✅ Completed |
-| **04** | **Advanced SQL Queries & Execution Plans** | [`📁 Experiment-4`](./Experiment-4) | ✅ Completed |
-| **05** | **SQL Views, View Updatability & Recursive CTE** | [`📁 Experiment-5`](./Experiment-5) | ✅ Completed |
-| **06** | **Stored Procedures, Triggers & Audit Logging** | [`📁 Experiment-6`](./Experiment-6) | ✅ Completed |
-| **07** | **Database Normalization (UNF to 1NF, 2NF, 3NF & BCNF)** | [`📁 Experiment-7`](./Experiment-7) | ✅ Completed |
-| **08** | **Banking Transactions, Savepoints & Concurrency Control** | [`📁 Experiment-8`](./Experiment-8) | ✅ Completed |
-| **09** | **B-Tree Indexing, Composite Indexes & Query Optimization** | [`📁 Experiment-9`](./Experiment-9) | ✅ Completed |
+| **01** | **Indian E-Commerce Platform ER Modeling** | [`📁 Experiment-01`](./Experiment-01) | ✅ Completed |
+| **02** | **ER Diagram to Relational Schema & Integrity Constraints** | [`📁 Experiment-02`](./Experiment-02) | ✅ Completed |
+| **03** | **Employee–Department–Project Schema** | [`📁 Experiment-03`](./Experiment-03) | ✅ Completed |
+| **04** | **Advanced SQL Queries & Execution Plans** | [`📁 Experiment-04`](./Experiment-04) | ✅ Completed |
+| **05** | **SQL Views, View Updatability & Recursive CTE** | [`📁 Experiment-05`](./Experiment-05) | ✅ Completed |
+| **06** | **Stored Procedures, Triggers & Audit Logging** | [`📁 Experiment-06`](./Experiment-06) | ✅ Completed |
+| **07** | **Database Normalization (UNF to 1NF, 2NF, 3NF & BCNF)** | [`📁 Experiment-07`](./Experiment-07) | ✅ Completed |
+| **08** | **Banking Transactions, Savepoints & Concurrency Control** | [`📁 Experiment-08`](./Experiment-08) | ✅ Completed |
+| **09** | **B-Tree Indexing, Composite Indexes & Query Optimization** | [`📁 Experiment-09`](./Experiment-09) | ✅ Completed |
 | **10** | **Query Optimization, Indexing Strategies & Query Rewriting** | [`📁 Experiment-10`](./Experiment-10) | ✅ Completed |
 
 ---
@@ -31,49 +31,49 @@ A structured laboratory repository containing practical experiments, relational 
 DBMS-Practical-File-/
 ├── README.md                   # Master practical documentation & experiment index
 ├── .gitignore
-├── Experiment-1/               # Experiment 1: Indian E-Commerce Platform ER Modeling
+├── Experiment-01/              # Experiment 1: Indian E-Commerce Platform ER Modeling
 │   ├── schema.sql              # Relational DDL schema with constraints & specializations
 │   ├── data.sql                # Realistic Indian e-commerce dataset
 │   ├── queries.sql             # Relational queries validating ER relationships
 │   ├── er_diagram.mermaid      # Standalone Mermaid ER diagram definition
 │   └── complete_experiment1.sql# Unified executable all-in-one script
-├── Experiment-2/               # Experiment 2: Relational Schema & Integrity Constraints
+├── Experiment-02/              # Experiment 2: Relational Schema & Integrity Constraints
 │   ├── schema.sql              # 18-Table DDL schema with ON DELETE CASCADE / SET NULL
 │   ├── data.sql                # Sample data insertion across all relations
 │   ├── integrity_tests.sql     # Referential integrity violations, SET NULL & CASCADE tests
 │   └── complete_experiment2.sql# Unified executable all-in-one script
-├── Experiment-3/               # Experiment 3: Employee-Department-Project Schema
+├── Experiment-03/              # Experiment 3: Employee-Department-Project Schema
 │   ├── schema.sql              # Database creation and table definitions
 │   ├── data.sql                # Dataset insertion (5 depts, 30 employees, 8 projects)
 │   ├── queries.sql             # 18 Categorized SQL queries (A to G)
 │   └── database_complete.sql   # Unified all-in-one executable script
-├── Experiment-4/               # Experiment 4: Advanced SQL Queries & EXPLAIN Plans
+├── Experiment-04/              # Experiment 4: Advanced SQL Queries & EXPLAIN Plans
 │   ├── advanced_queries.sql    # 8 Advanced queries (Joins, Subqueries, Sets)
 │   ├── explain_plans.sql       # EXPLAIN execution plan analysis
 │   └── complete_experiment4.sql# Unified executable script for Experiment 4
-├── Experiment-5/               # Experiment 5: SQL Views & Recursive CTE
+├── Experiment-05/              # Experiment 5: SQL Views & Recursive CTE
 │   ├── schema_update.sql       # Hierarchy alteration & manager assignments
 │   ├── views_and_updatability.sql # Views creation & updatability tests
 │   ├── recursive_cte.sql       # Hierarchical recursive CTE queries
 │   └── complete_experiment5.sql# Unified executable script for Experiment 5
-├── Experiment-6/               # Experiment 6: Stored Procedures, Triggers & Audit Logging
+├── Experiment-06/              # Experiment 6: Stored Procedures, Triggers & Audit Logging
 │   ├── schema_and_data.sql     # Base tables, constraints, audit table & sample records
 │   ├── stored_procedures.sql   # transfer_employee procedure with exception handling
 │   ├── triggers_and_audit.sql  # Salary validation & automated audit logging triggers
 │   └── complete_experiment6.sql# Unified executable script for Experiment 6
-├── Experiment-7/               # Experiment 7: Database Normalization (UNF to BCNF)
+├── Experiment-07/              # Experiment 7: Database Normalization (UNF to BCNF)
 │   ├── 01_unf_and_1nf.sql      # Denormalized table creation & 1NF conversion
 │   ├── 02_2nf_decomposition.sql# 2NF decomposition eliminating partial dependencies
 │   ├── 03_3nf_and_bcnf.sql     # 3NF/BCNF decomposition eliminating transitive dependencies
 │   ├── 04_verification_lossless_and_fd.sql # Lossless join & dependency preservation tests
 │   └── complete_experiment7.sql# Unified executable all-in-one script
-├── Experiment-8/               # Experiment 8: Transactions, Savepoints & Concurrency
+├── Experiment-08/              # Experiment 8: Transactions, Savepoints & Concurrency
 │   ├── 01_banking_schema_and_commit.sql # Accounts schema & BEGIN/COMMIT transfer
 │   ├── 02_rollback_and_savepoint.sql    # Full ROLLBACK & SAVEPOINT partial rollback
 │   ├── 03_partial_failure_simulation.sql# Simulated invalid transfer & atomicity rollback
 │   ├── 04_isolation_levels_and_concurrency.sql # Isolation levels & 2-session anomaly
 │   └── complete_experiment8.sql         # Unified executable all-in-one script
-├── Experiment-9/               # Experiment 9: B-Tree Indexing & Query Optimization
+├── Experiment-09/              # Experiment 9: B-Tree Indexing & Query Optimization
 │   ├── 01_schema_and_data_generation.sql # 5K records procedural generation
 │   ├── 02_single_column_index.sql        # Single-column index & EXPLAIN comparison
 │   ├── 03_composite_index.sql            # Composite index & EXPLAIN comparison
@@ -93,7 +93,7 @@ DBMS-Practical-File-/
 
 [![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![Database](https://img.shields.io/badge/Database-EcommerceDB-005C84?style=for-the-badge&logo=databricks&logoColor=white)](https://github.com/)
-[![Diagram](https://img.shields.io/badge/Diagram-Mermaid_ER-ff69b4?style=for-the-badge&logo=mermaid&logoColor=white)](./Experiment-1/er_diagram.mermaid)
+[![Diagram](https://img.shields.io/badge/Diagram-Mermaid_ER-ff69b4?style=for-the-badge&logo=mermaid&logoColor=white)](./Experiment-01/er_diagram.mermaid)
 
 ---
 
@@ -334,7 +334,7 @@ The conceptual ER model maps directly to 15 relational tables in MySQL adhering 
 ## 📁 Experiment 1 Files
 
 ```tree
-Experiment-1/
+Experiment-01/
 ├── schema.sql              # Relational DDL schema with constraints & specializations
 ├── data.sql                # Realistic Indian e-commerce dataset
 ├── queries.sql             # Relational queries validating ER relationships
@@ -355,19 +355,19 @@ Experiment-1/
    ```
 3. Run the unified SQL script:
    ```sql
-   SOURCE Experiment-1/complete_experiment1.sql;
+   SOURCE Experiment-01/complete_experiment1.sql;
    ```
    *Or execute modularly:*
    ```sql
-   SOURCE Experiment-1/schema.sql;
-   SOURCE Experiment-1/data.sql;
-   SOURCE Experiment-1/queries.sql;
+   SOURCE Experiment-01/schema.sql;
+   SOURCE Experiment-01/data.sql;
+   SOURCE Experiment-01/queries.sql;
    ```
 
 ### Method 2: Using MySQL Workbench
 
 1. Open **MySQL Workbench** and connect to your local database server.
-2. Open `Experiment-1/complete_experiment1.sql`.
+2. Open `Experiment-01/complete_experiment1.sql`.
 3. Click the ⚡ **Execute (All Queries)** button.
 4. Review the created schema, seeded Indian e-commerce datasets, and query verification grids.
 
@@ -694,7 +694,7 @@ Referential integrity dictates that a foreign key value in a child table must re
 ## 📁 Experiment 2 Files
 
 ```tree
-Experiment-2/
+Experiment-02/
 ├── schema.sql              # 18-Table DDL schema with ON DELETE CASCADE / SET NULL
 ├── data.sql                # Sample data insertion across all relations
 ├── integrity_tests.sql     # Referential integrity violations, SET NULL & CASCADE tests
@@ -714,19 +714,19 @@ Experiment-2/
    ```
 3. Run the unified SQL script:
    ```sql
-   SOURCE Experiment-2/complete_experiment2.sql;
+   SOURCE Experiment-02/complete_experiment2.sql;
    ```
    *Or run modularly:*
    ```sql
-   SOURCE Experiment-2/schema.sql;
-   SOURCE Experiment-2/data.sql;
-   SOURCE Experiment-2/integrity_tests.sql;
+   SOURCE Experiment-02/schema.sql;
+   SOURCE Experiment-02/data.sql;
+   SOURCE Experiment-02/integrity_tests.sql;
    ```
 
 ### Method 2: Using MySQL Workbench
 
 1. Open **MySQL Workbench** and connect to your database instance.
-2. Open `Experiment-2/complete_experiment2.sql`.
+2. Open `Experiment-02/complete_experiment2.sql`.
 3. Click the ⚡ **Execute (All Queries)** button.
 4. View the table inventory, seeded data grids, and integrity verification outputs.
 
@@ -1004,13 +1004,13 @@ The database `CompanyDB` models organizational entities and their operational as
    ```
 3. Run the unified SQL script:
    ```sql
-   SOURCE Experiment-3/database_complete.sql;
+   SOURCE Experiment-03/database_complete.sql;
    ```
    *Or run modularly:*
    ```sql
-   SOURCE Experiment-3/schema.sql;
-   SOURCE Experiment-3/data.sql;
-   SOURCE Experiment-3/queries.sql;
+   SOURCE Experiment-03/schema.sql;
+   SOURCE Experiment-03/data.sql;
+   SOURCE Experiment-03/queries.sql;
    ```
 
 ### Method 2: Using MySQL Workbench
@@ -1305,7 +1305,7 @@ To perform advanced SQL queries on the **Employee–Department–Project** datab
 ## 📁 Experiment 4 Files
 
 ```tree
-Experiment-4/
+Experiment-04/
 ├── advanced_queries.sql    # 8 Advanced SQL queries (Joins, Subqueries, Sets)
 ├── explain_plans.sql       # 4 Query execution plan analysis scripts
 └── complete_experiment4.sql# Unified script running all queries and EXPLAIN statements
@@ -1319,13 +1319,13 @@ Make sure the `CompanyDB` database from Experiment 3 is already created and popu
 
 ```sql
 USE CompanyDB;
-SOURCE Experiment-4/complete_experiment4.sql;
+SOURCE Experiment-04/complete_experiment4.sql;
 ```
 
 *Or execute components individually:*
 ```sql
-SOURCE Experiment-4/advanced_queries.sql;
-SOURCE Experiment-4/explain_plans.sql;
+SOURCE Experiment-04/advanced_queries.sql;
+SOURCE Experiment-04/explain_plans.sql;
 ```
 
 ---
@@ -1712,7 +1712,7 @@ To design and implement SQL views for department salary aggregation and employee
 ## 📁 Experiment 5 Files
 
 ```tree
-Experiment-5/
+Experiment-05/
 ├── schema_update.sql          # Self-referencing Foreign Key & reporting relationships
 ├── views_and_updatability.sql # View creation, updatability tests & definition checks
 ├── recursive_cte.sql          # Recursive CTE reporting chains & indented trees
@@ -1727,14 +1727,14 @@ Make sure `CompanyDB` is initialized.
 
 ```sql
 USE CompanyDB;
-SOURCE Experiment-5/complete_experiment5.sql;
+SOURCE Experiment-05/complete_experiment5.sql;
 ```
 
 *Or execute components modularly:*
 ```sql
-SOURCE Experiment-5/schema_update.sql;
-SOURCE Experiment-5/views_and_updatability.sql;
-SOURCE Experiment-5/recursive_cte.sql;
+SOURCE Experiment-05/schema_update.sql;
+SOURCE Experiment-05/views_and_updatability.sql;
+SOURCE Experiment-05/recursive_cte.sql;
 ```
 
 ---
@@ -2027,7 +2027,7 @@ To design and implement:
 ## 📁 Experiment 6 Files
 
 ```tree
-Experiment-6/
+Experiment-06/
 ├── schema_and_data.sql     # Base tables, constraints, audit table & sample records
 ├── stored_procedures.sql   # transfer_employee procedure with exception handling
 ├── triggers_and_audit.sql  # Salary validation & automated audit logging triggers
@@ -2047,19 +2047,19 @@ Experiment-6/
    ```
 3. Run the unified SQL script:
    ```sql
-   SOURCE Experiment-6/complete_experiment6.sql;
+   SOURCE Experiment-06/complete_experiment6.sql;
    ```
    *Or run modularly:*
    ```sql
-   SOURCE Experiment-6/schema_and_data.sql;
-   SOURCE Experiment-6/stored_procedures.sql;
-   SOURCE Experiment-6/triggers_and_audit.sql;
+   SOURCE Experiment-06/schema_and_data.sql;
+   SOURCE Experiment-06/stored_procedures.sql;
+   SOURCE Experiment-06/triggers_and_audit.sql;
    ```
 
 ### Method 2: Using MySQL Workbench
 
 1. Open **MySQL Workbench** and connect to your database instance.
-2. Open `Experiment-6/complete_experiment6.sql`.
+2. Open `Experiment-06/complete_experiment6.sql`.
 3. Click the ⚡ **Execute (All Queries)** button.
 4. Review the query results and generated audit logs in the output grid.
 
@@ -2300,7 +2300,7 @@ From the denormalized relation `Registration_UNF(registration_id, student_id, st
 ## 📁 Experiment 7 Files
 
 ```tree
-Experiment-7/
+Experiment-07/
 ├── 01_unf_and_1nf.sql                  # Denormalized UNF schema & 1NF transformation
 ├── 02_2nf_decomposition.sql            # 2NF decomposition eliminating partial dependencies
 ├── 03_3nf_and_bcnf.sql                 # 3NF/BCNF decomposition eliminating transitive dependencies
@@ -2321,20 +2321,20 @@ Experiment-7/
    ```
 3. Run the complete unified script:
    ```sql
-   SOURCE Experiment-7/complete_experiment7.sql;
+   SOURCE Experiment-07/complete_experiment7.sql;
    ```
    *Or execute step-by-step:*
    ```sql
-   SOURCE Experiment-7/01_unf_and_1nf.sql;
-   SOURCE Experiment-7/02_2nf_decomposition.sql;
-   SOURCE Experiment-7/03_3nf_and_bcnf.sql;
-   SOURCE Experiment-7/04_verification_lossless_and_fd.sql;
+   SOURCE Experiment-07/01_unf_and_1nf.sql;
+   SOURCE Experiment-07/02_2nf_decomposition.sql;
+   SOURCE Experiment-07/03_3nf_and_bcnf.sql;
+   SOURCE Experiment-07/04_verification_lossless_and_fd.sql;
    ```
 
 ### Method 2: Using MySQL Workbench
 
 1. Open **MySQL Workbench** and connect to your instance.
-2. Open `Experiment-7/complete_experiment7.sql`.
+2. Open `Experiment-07/complete_experiment7.sql`.
 3. Click the ⚡ **Execute (All Queries)** button and review the result grids.
 
 ---
@@ -2669,7 +2669,7 @@ When multiple transactions execute concurrently without proper isolation, severa
 ## 📁 Experiment 8 Files
 
 ```tree
-Experiment-8/
+Experiment-08/
 ├── 01_banking_schema_and_commit.sql        # Accounts DDL & atomic BEGIN/COMMIT transfer
 ├── 02_rollback_and_savepoint.sql           # Full ROLLBACK & SAVEPOINT partial rollback
 ├── 03_partial_failure_simulation.sql       # Invalid account transfer failure & atomicity test
@@ -2690,14 +2690,14 @@ Experiment-8/
    ```
 3. Run the complete unified script:
    ```sql
-   SOURCE Experiment-8/complete_experiment8.sql;
+   SOURCE Experiment-08/complete_experiment8.sql;
    ```
    *Or execute step-by-step:*
    ```sql
-   SOURCE Experiment-8/01_banking_schema_and_commit.sql;
-   SOURCE Experiment-8/02_rollback_and_savepoint.sql;
-   SOURCE Experiment-8/03_partial_failure_simulation.sql;
-   SOURCE Experiment-8/04_isolation_levels_and_concurrency.sql;
+   SOURCE Experiment-08/01_banking_schema_and_commit.sql;
+   SOURCE Experiment-08/02_rollback_and_savepoint.sql;
+   SOURCE Experiment-08/03_partial_failure_simulation.sql;
+   SOURCE Experiment-08/04_isolation_levels_and_concurrency.sql;
    ```
 
 ### Method 2: Testing Multi-Session Concurrency in Two Terminals
@@ -3026,7 +3026,7 @@ Database indexes are specialized auxiliary data structures (predominantly **B-Tr
 ## 📁 Experiment 9 Files
 
 ```tree
-Experiment-9/
+Experiment-09/
 ├── 01_schema_and_data_generation.sql   # Railway schema & 5,000 records procedural synthesis
 ├── 02_single_column_index.sql          # Single index creation & EXPLAIN benchmark
 ├── 03_composite_index.sql              # Composite index creation & EXPLAIN benchmark
@@ -3047,20 +3047,20 @@ Experiment-9/
    ```
 3. Run the complete unified script:
    ```sql
-   SOURCE Experiment-9/complete_experiment9.sql;
+   SOURCE Experiment-09/complete_experiment9.sql;
    ```
    *Or execute step-by-step:*
    ```sql
-   SOURCE Experiment-9/01_schema_and_data_generation.sql;
-   SOURCE Experiment-9/02_single_column_index.sql;
-   SOURCE Experiment-9/03_composite_index.sql;
-   SOURCE Experiment-9/04_performance_benchmarking.sql;
+   SOURCE Experiment-09/01_schema_and_data_generation.sql;
+   SOURCE Experiment-09/02_single_column_index.sql;
+   SOURCE Experiment-09/03_composite_index.sql;
+   SOURCE Experiment-09/04_performance_benchmarking.sql;
    ```
 
 ### Method 2: Using MySQL Workbench
 
 1. Open **MySQL Workbench** and connect to your database instance.
-2. Open `Experiment-9/complete_experiment9.sql`.
+2. Open `Experiment-09/complete_experiment9.sql`.
 3. Click the ⚡ **Execute (All Queries)** button. Note that bulk inserting 5,000 records may take 2-5 seconds.
 
 ---
