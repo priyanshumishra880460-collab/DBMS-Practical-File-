@@ -18,6 +18,7 @@ A structured laboratory repository containing practical experiments, relational 
 | **04** | **Advanced SQL Queries & Execution Plans** | [`📁 Experiment-4`](./Experiment-4) | ✅ Completed |
 | **05** | **SQL Views, View Updatability & Recursive CTE** | [`📁 Experiment-5`](./Experiment-5) | ✅ Completed |
 | **06** | **Stored Procedures, Triggers & Audit Logging** | [`📁 Experiment-6`](./Experiment-6) | ✅ Completed |
+| **07** | **Database Normalization (UNF to 1NF, 2NF, 3NF & BCNF)** | [`📁 Experiment-7`](./Experiment-7) | ✅ Completed |
 
 ---
 
@@ -52,11 +53,17 @@ DBMS-Practical-File-/
 │   ├── views_and_updatability.sql # Views creation & updatability tests
 │   ├── recursive_cte.sql       # Hierarchical recursive CTE queries
 │   └── complete_experiment5.sql# Unified executable script for Experiment 5
-└── Experiment-6/               # Experiment 6: Stored Procedures, Triggers & Audit Logging
-    ├── schema_and_data.sql     # Base tables, constraints, audit table & sample records
-    ├── stored_procedures.sql   # transfer_employee procedure with exception handling
-    ├── triggers_and_audit.sql  # Salary validation & automated audit logging triggers
-    └── complete_experiment6.sql# Unified executable script for Experiment 6
+├── Experiment-6/               # Experiment 6: Stored Procedures, Triggers & Audit Logging
+│   ├── schema_and_data.sql     # Base tables, constraints, audit table & sample records
+│   ├── stored_procedures.sql   # transfer_employee procedure with exception handling
+│   ├── triggers_and_audit.sql  # Salary validation & automated audit logging triggers
+│   └── complete_experiment6.sql# Unified executable script for Experiment 6
+└── Experiment-7/               # Experiment 7: Database Normalization (UNF to BCNF)
+    ├── 01_unf_and_1nf.sql      # Denormalized table creation & 1NF conversion
+    ├── 02_2nf_decomposition.sql# 2NF decomposition eliminating partial dependencies
+    ├── 03_3nf_and_bcnf.sql     # 3NF/BCNF decomposition eliminating transitive dependencies
+    ├── 04_verification_lossless_and_fd.sql # Lossless join & dependency preservation tests
+    └── complete_experiment7.sql# Unified executable all-in-one script
 ```
 
 ---
@@ -2220,3 +2227,369 @@ WHERE Emp_ID = 1;
 ## 📈 Experiment 6 Results & Conclusion
 
 The stored procedure `transfer_employee` and triggers `before_employee_salary_update` and `after_employee_salary_update` were successfully implemented and verified on MySQL. Input validation and custom error handling correctly blocked invalid operations (non-existent employee, non-existent department, and negative salary) with user-friendly messages via `SQLSTATE '45000'`. Valid departmental transfers and salary revisions succeeded, and all salary modifications were recorded in the `Salary_Audit` table.
+
+---
+
+# 🔬 Experiment 7: Database Normalization (UNF to 1NF, 2NF, 3NF & BCNF) with Lossless Join & Dependency Preservation
+
+[![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Database](https://img.shields.io/badge/Database-UniversityDB-005C84?style=for-the-badge&logo=databricks&logoColor=white)](https://github.com/)
+
+---
+
+## 📌 Aim & Objectives
+
+Given a denormalized database relation (`Registration_UNF`), identify all functional dependencies (FDs) and perform step-by-step relational database normalization from **UNF** to **1NF**, **2NF**, **3NF**, and **BCNF (Boyce-Codd Normal Form)**. Verify:
+1. **Lossless Join Decomposition:** Demonstrating through multi-table relational joins that the decomposed tables reconstruct the original dataset with zero information loss and no spurious tuples.
+2. **Dependency Preservation:** Validating through SQL aggregation checks that all original functional dependencies are preserved across the decomposed schema without cross-table constraints.
+
+---
+
+## 📖 Theory & Core Concepts
+
+Database Normalization is the systematic technique of structuring relational schemas to minimize data redundancy, avoid insertion/update/deletion anomalies, and ensure data integrity.
+
+### 1. Functional Dependencies in the Registration Schema
+From the denormalized relation `Registration_UNF(registration_id, student_id, student_name, course_id, course_name, instructor_id, instructor_name, department, semester, grade)`:
+- `FD1: registration_id -> student_id, course_id, semester, grade` (Primary registration identifier)
+- `FD2: student_id -> student_name` (Student profile)
+- `FD3: course_id -> course_name, instructor_id` (Course details and instructor assignment)
+- `FD4: instructor_id -> instructor_name, department` (Instructor personal details and department)
+- `Candidate Keys:` `{registration_id}`, `{student_id, course_id}`
+
+### 2. Normal Forms Progression
+
+- **UNF (Unnormalized Form):** A flat table storing multiple real-world entities together without strict constraints. Contains high redundancy (e.g., student name and instructor details repeated across multiple course enrollments).
+- **1NF (First Normal Form):** Every column contains atomic (indivisible) scalar values with unique column names and no repeating groups.
+- **2NF (Second Normal Form):** Must be in 1NF, and every non-prime attribute must be **fully functionally dependent** on the candidate key (elimination of *Partial Dependencies*).
+  - *Partial Dependencies in 1NF:* In composite candidate key `{student_id, course_id}`, `student_name` depends solely on `student_id`, and `course_name`, `instructor_id` depend solely on `course_id`.
+  - *Resolution:* Decomposed into `Students(student_id PK, student_name)`, `Courses(course_id PK, course_name, instructor_id, instructor_name, department)`, and `Registrations(registration_id PK, student_id FK, course_id FK, semester, grade)`.
+- **3NF (Third Normal Form):** Must be in 2NF, and no non-prime attribute is **transitively dependent** on any candidate key (elimination of *Transitive Dependencies* `X -> Y -> Z`).
+  - *Transitive Dependency in 2NF Courses:* `course_id -> instructor_id` and `instructor_id -> instructor_name, department`.
+  - *Resolution:* Decomposed `Courses` into `Instructors(instructor_id PK, instructor_name, department)` and `Courses_3NF(course_id PK, course_name, instructor_id FK)`.
+- **BCNF (Boyce-Codd Normal Form):** A relation is in BCNF if for every non-trivial functional dependency `X -> Y`, the determinant `X` is a **Superkey**.
+  - In all resulting tables (`Students`, `Instructors`, `Courses_3NF`, `Registrations`), every determinant is a Primary/Superkey, satisfying BCNF.
+
+### 3. Properties of Good Decomposition
+- **Lossless Join Decomposition:** $R_1 \bowtie R_2 = R$. The natural join of the decomposed relations reproduces the original relation $R$ exactly without generating spurious rows.
+- **Dependency Preservation:** Every functional dependency in $F$ can be verified directly on a single decomposed relation without computing expensive cross-table joins.
+
+---
+
+## 📁 Experiment 7 Files
+
+```tree
+Experiment-7/
+├── 01_unf_and_1nf.sql                  # Denormalized UNF schema & 1NF transformation
+├── 02_2nf_decomposition.sql            # 2NF decomposition eliminating partial dependencies
+├── 03_3nf_and_bcnf.sql                 # 3NF/BCNF decomposition eliminating transitive dependencies
+├── 04_verification_lossless_and_fd.sql # Lossless join reconstruction & FD verification
+└── complete_experiment7.sql            # Unified executable script for entire Experiment 7
+```
+
+---
+
+## 🚀 Getting Started / Execution Guide (Experiment 7)
+
+### Method 1: Using MySQL Command Line Client
+
+1. Open your terminal in the repository root directory.
+2. Log into MySQL:
+   ```bash
+   mysql -u root -p
+   ```
+3. Run the complete unified script:
+   ```sql
+   SOURCE Experiment-7/complete_experiment7.sql;
+   ```
+   *Or execute step-by-step:*
+   ```sql
+   SOURCE Experiment-7/01_unf_and_1nf.sql;
+   SOURCE Experiment-7/02_2nf_decomposition.sql;
+   SOURCE Experiment-7/03_3nf_and_bcnf.sql;
+   SOURCE Experiment-7/04_verification_lossless_and_fd.sql;
+   ```
+
+### Method 2: Using MySQL Workbench
+
+1. Open **MySQL Workbench** and connect to your instance.
+2. Open `Experiment-7/complete_experiment7.sql`.
+3. Click the ⚡ **Execute (All Queries)** button and review the result grids.
+
+---
+
+## 📊 Step-by-Step Normalization Implementation
+
+### 1. Creating Denormalized Table (UNF) & Converting to 1NF
+```sql
+CREATE DATABASE IF NOT EXISTS UniversityDB;
+USE UniversityDB;
+
+CREATE TABLE Registration_UNF (
+    registration_id INT,
+    student_id INT,
+    student_name VARCHAR(100),
+    course_id INT,
+    course_name VARCHAR(100),
+    instructor_id INT,
+    instructor_name VARCHAR(100),
+    department VARCHAR(100),
+    semester VARCHAR(20),
+    grade CHAR(2)
+);
+
+INSERT INTO Registration_UNF VALUES
+(501, 101, 'Ankan Bhattacharjee', 201, 'Database Systems', 301, 'Dr Mehta', 'CSE', 'Semester 3', 'A'),
+(502, 102, 'Unnati Mishra', 202, 'Operating Systems', 302, 'Dr Rao', 'CSE', 'Semester 3', 'B'),
+(503, 103, 'Riya Patel', 203, 'Computer Networks', 303, 'Dr Sen', 'IT', 'Semester 4', 'A'),
+(504, 104, 'Isha Gupta', 201, 'Database Systems', 301, 'Dr Mehta', 'CSE', 'Semester 3', 'B'),
+(505, 105, 'Arjun Das', 204, 'Artificial Intelligence', 304, 'Dr Nair', 'AIML', 'Semester 5', 'A');
+
+-- Convert to 1NF
+CREATE TABLE Registration_1NF AS
+SELECT * FROM Registration_UNF;
+```
+
+---
+
+### 2. Decomposing to 2NF (Eliminating Partial Dependencies)
+```sql
+-- Students Table
+CREATE TABLE Students (
+    student_id INT PRIMARY KEY,
+    student_name VARCHAR(100) NOT NULL
+);
+
+INSERT INTO Students
+SELECT DISTINCT student_id, student_name
+FROM Registration_UNF;
+
+-- Courses Table (2NF)
+CREATE TABLE Courses (
+    course_id INT PRIMARY KEY,
+    course_name VARCHAR(100) NOT NULL,
+    instructor_id INT,
+    instructor_name VARCHAR(100),
+    department VARCHAR(100)
+);
+
+INSERT INTO Courses
+SELECT DISTINCT course_id, course_name, instructor_id, instructor_name, department
+FROM Registration_UNF;
+
+-- Registrations Table (2NF)
+CREATE TABLE Registrations (
+    registration_id INT PRIMARY KEY,
+    student_id INT,
+    course_id INT,
+    semester VARCHAR(20),
+    grade CHAR(2),
+    FOREIGN KEY (student_id) REFERENCES Students(student_id),
+    FOREIGN KEY (course_id) REFERENCES Courses(course_id)
+);
+
+INSERT INTO Registrations
+SELECT DISTINCT registration_id, student_id, course_id, semester, grade
+FROM Registration_UNF;
+```
+
+---
+
+### 3. Decomposing to 3NF & BCNF (Eliminating Transitive Dependencies)
+```sql
+-- Instructors Table (3NF & BCNF)
+CREATE TABLE Instructors (
+    instructor_id INT PRIMARY KEY,
+    instructor_name VARCHAR(100) NOT NULL,
+    department VARCHAR(100)
+);
+
+INSERT INTO Instructors
+SELECT DISTINCT instructor_id, instructor_name, department
+FROM Registration_UNF;
+
+-- Courses_3NF Table (3NF & BCNF)
+CREATE TABLE Courses_3NF (
+    course_id INT PRIMARY KEY,
+    course_name VARCHAR(100) NOT NULL,
+    instructor_id INT,
+    FOREIGN KEY (instructor_id) REFERENCES Instructors(instructor_id)
+);
+
+INSERT INTO Courses_3NF
+SELECT DISTINCT course_id, course_name, instructor_id
+FROM Registration_UNF;
+```
+
+---
+
+### 4. Verification: Lossless Join Decomposition
+```sql
+SELECT
+    r.registration_id,
+    s.student_id,
+    s.student_name,
+    c.course_id,
+    c.course_name,
+    i.instructor_id,
+    i.instructor_name,
+    i.department,
+    r.semester,
+    r.grade
+FROM Registrations r
+JOIN Students s ON r.student_id = s.student_id
+JOIN Courses_3NF c ON r.course_id = c.course_id
+JOIN Instructors i ON c.instructor_id = i.instructor_id
+ORDER BY r.registration_id;
+```
+
+---
+
+### 5. Verification: Dependency Preservation
+```sql
+-- Verifying student dependency (student_id -> student_name)
+SELECT student_id
+FROM Students
+GROUP BY student_id
+HAVING COUNT(DISTINCT student_name) > 1;
+
+-- Verifying instructor dependency (instructor_id -> instructor_name, department)
+SELECT instructor_id
+FROM Instructors
+GROUP BY instructor_id
+HAVING COUNT(DISTINCT instructor_name) > 1
+    OR COUNT(DISTINCT department) > 1;
+
+-- Verifying course dependency (course_id -> course_name, instructor_id)
+SELECT course_id
+FROM Courses_3NF
+GROUP BY course_id
+HAVING COUNT(DISTINCT course_name) > 1
+    OR COUNT(DISTINCT instructor_id) > 1;
+
+-- Verifying registration uniqueness
+SELECT registration_id
+FROM Registrations
+GROUP BY registration_id
+HAVING COUNT(*) > 1;
+```
+
+---
+
+## 📋 Expected Outputs & Execution Verification
+
+### 1. Original Denormalized Registration Table (`Registration_UNF`)
+```
++-----------------+------------+--------------------+-----------+-------------------------+---------------+-----------------+------------+------------+-------+
+| registration_id | student_id | student_name       | course_id | course_name             | instructor_id | instructor_name | department | semester   | grade |
++-----------------+------------+--------------------+-----------+-------------------------+---------------+-----------------+------------+------------+-------+
+|             501 |        101 | Ankan Bhattacharjee|       201 | Database Systems        |           301 | Dr Mehta        | CSE        | Semester 3 | A     |
+|             502 |        102 | Unnati Mishra      |       202 | Operating Systems       |           302 | Dr Rao          | CSE        | Semester 3 | B     |
+|             503 |        103 | Riya Patel         |       203 | Computer Networks       |           303 | Dr Sen          | IT         | Semester 4 | A     |
+|             504 |        104 | Isha Gupta         |       201 | Database Systems        |           301 | Dr Mehta        | CSE        | Semester 3 | B     |
+|             505 |        105 | Arjun Das          |       204 | Artificial Intelligence |           304 | Dr Nair         | AIML       | Semester 5 | A     |
++-----------------+------------+--------------------+-----------+-------------------------+---------------+-----------------+------------+------------+-------+
+```
+
+### 2. Normalized Tables in 3NF / BCNF
+
+#### `Students` Table:
+```
++------------+--------------------+
+| student_id | student_name       |
++------------+--------------------+
+|        101 | Ankan Bhattacharjee|
+|        102 | Unnati Mishra      |
+|        103 | Riya Patel         |
+|        104 | Isha Gupta         |
+|        105 | Arjun Das          |
++------------+--------------------+
+```
+
+#### `Instructors` Table:
+```
++---------------+-----------------+------------+
+| instructor_id | instructor_name | department |
++---------------+-----------------+------------+
+|           301 | Dr Mehta        | CSE        |
+|           302 | Dr Rao          | CSE        |
+|           303 | Dr Sen          | IT         |
+|           304 | Dr Nair         | AIML       |
++---------------+-----------------+------------+
+```
+
+#### `Courses_3NF` Table:
+```
++-----------+-------------------------+---------------+
+| course_id | course_name             | instructor_id |
++-----------+-------------------------+---------------+
+|       201 | Database Systems        |           301 |
+|       202 | Operating Systems       |           302 |
+|       203 | Computer Networks       |           303 |
+|       204 | Artificial Intelligence |           304 |
++-----------+-------------------------+---------------+
+```
+
+#### `Registrations` Table:
+```
++-----------------+------------+-----------+------------+-------+
+| registration_id | student_id | course_id | semester   | grade |
++-----------------+------------+-----------+------------+-------+
+|             501 |        101 |       201 | Semester 3 | A     |
+|             502 |        102 |       202 | Semester 3 | B     |
+|             503 |        103 |       203 | Semester 4 | A     |
+|             504 |        104 |       201 | Semester 3 | B     |
+|             505 |        105 |       204 | Semester 5 | A     |
++-----------------+------------+-----------+------------+-------+
+```
+
+### 3. Lossless Join Reconstructed Output
+```
++-----------------+------------+--------------------+-----------+-------------------------+---------------+-----------------+------------+------------+-------+
+| registration_id | student_id | student_name       | course_id | course_name             | instructor_id | instructor_name | department | semester   | grade |
++-----------------+------------+--------------------+-----------+-------------------------+---------------+-----------------+------------+------------+-------+
+|             501 |        101 | Ankan Bhattacharjee|       201 | Database Systems        |           301 | Dr Mehta        | CSE        | Semester 3 | A     |
+|             502 |        102 | Unnati Mishra      |       202 | Operating Systems       |           302 | Dr Rao          | CSE        | Semester 3 | B     |
+|             503 |        103 | Riya Patel         |       203 | Computer Networks       |           303 | Dr Sen          | IT         | Semester 4 | A     |
+|             504 |        104 | Isha Gupta         |       201 | Database Systems        |           301 | Dr Mehta        | CSE        | Semester 3 | B     |
+|             505 |        105 | Arjun Das          |       204 | Artificial Intelligence |           304 | Dr Nair         | AIML       | Semester 5 | A     |
++-----------------+------------+--------------------+-----------+-------------------------+---------------+-----------------+------------+------------+-------+
+```
+
+### 4. Dependency Preservation Test Results
+```
+Empty set (0.00 sec)
+Empty set (0.00 sec)
+Empty set (0.00 sec)
+Empty set (0.00 sec)
+```
+*(All 4 dependency verification queries returned 0 rows, confirming that every single functional dependency is fully preserved across the decomposed relations).*
+
+### 5. Final Reconstructed View
+```
++-----------------+--------------------+-------------------------+-----------------+------------+------------+-------+
+| registration_id | student_name       | course_name             | instructor_name | department | semester   | grade |
++-----------------+--------------------+-------------------------+-----------------+------------+------------+-------+
+|             501 | Ankan Bhattacharjee| Database Systems        | Dr Mehta        | CSE        | Semester 3 | A     |
+|             502 | Unnati Mishra      | Operating Systems       | Dr Rao          | CSE        | Semester 3 | B     |
+|             503 | Riya Patel         | Computer Networks       | Dr Sen          | IT         | Semester 4 | A     |
+|             504 | Isha Gupta         | Database Systems        | Dr Mehta        | CSE        | Semester 3 | B     |
+|             505 | Arjun Das          | Artificial Intelligence | Dr Nair         | AIML       | Semester 5 | A     |
++-----------------+--------------------+-------------------------+-----------------+------------+------------+-------+
+```
+
+---
+
+## 💡 Important Observations
+
+- **Anomaly Elimination:** Updating an instructor's department now requires modifying exactly one tuple in `Instructors` rather than updating multiple registration records, eliminating Update Anomalies.
+- **Independence of Entities:** A new course or instructor can now be registered in `Courses_3NF` / `Instructors` without requiring student enrollment, eliminating Insertion Anomalies.
+- **Graceful Deletion:** Deleting a student registration does not inadvertently delete the course or instructor details from the university catalog, eliminating Deletion Anomalies.
+- **Simultaneous Lossless Join & Dependency Preservation:** The schema decomposition simultaneously achieves both the **Lossless Join Property** and **Dependency Preservation**, representing the gold standard in relational database design.
+
+---
+
+## 📈 Experiment 7 Results & Conclusion
+
+The denormalized student course registration schema was successfully normalized step-by-step from **UNF** to **1NF**, **2NF**, **3NF**, and **BCNF**. Partial functional dependencies were eliminated by isolating `Students` and `Courses`, while transitive dependencies were resolved by extracting `Instructors`. The relational decomposition was formally verified via SQL to be both **lossless** (exact table reconstruction with zero spurious rows) and **dependency preserving** (all functional dependencies enforced within individual relations).
+
