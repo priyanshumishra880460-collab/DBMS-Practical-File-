@@ -19,6 +19,7 @@ A structured laboratory repository containing practical experiments, relational 
 | **05** | **SQL Views, View Updatability & Recursive CTE** | [`📁 Experiment-5`](./Experiment-5) | ✅ Completed |
 | **06** | **Stored Procedures, Triggers & Audit Logging** | [`📁 Experiment-6`](./Experiment-6) | ✅ Completed |
 | **07** | **Database Normalization (UNF to 1NF, 2NF, 3NF & BCNF)** | [`📁 Experiment-7`](./Experiment-7) | ✅ Completed |
+| **08** | **Banking Transactions, Savepoints & Concurrency Control** | [`📁 Experiment-8`](./Experiment-8) | ✅ Completed |
 
 ---
 
@@ -58,12 +59,18 @@ DBMS-Practical-File-/
 │   ├── stored_procedures.sql   # transfer_employee procedure with exception handling
 │   ├── triggers_and_audit.sql  # Salary validation & automated audit logging triggers
 │   └── complete_experiment6.sql# Unified executable script for Experiment 6
-└── Experiment-7/               # Experiment 7: Database Normalization (UNF to BCNF)
-    ├── 01_unf_and_1nf.sql      # Denormalized table creation & 1NF conversion
-    ├── 02_2nf_decomposition.sql# 2NF decomposition eliminating partial dependencies
-    ├── 03_3nf_and_bcnf.sql     # 3NF/BCNF decomposition eliminating transitive dependencies
-    ├── 04_verification_lossless_and_fd.sql # Lossless join & dependency preservation tests
-    └── complete_experiment7.sql# Unified executable all-in-one script
+├── Experiment-7/               # Experiment 7: Database Normalization (UNF to BCNF)
+│   ├── 01_unf_and_1nf.sql      # Denormalized table creation & 1NF conversion
+│   ├── 02_2nf_decomposition.sql# 2NF decomposition eliminating partial dependencies
+│   ├── 03_3nf_and_bcnf.sql     # 3NF/BCNF decomposition eliminating transitive dependencies
+│   ├── 04_verification_lossless_and_fd.sql # Lossless join & dependency preservation tests
+│   └── complete_experiment7.sql# Unified executable all-in-one script
+└── Experiment-8/               # Experiment 8: Transactions, Savepoints & Concurrency
+    ├── 01_banking_schema_and_commit.sql # Accounts schema & BEGIN/COMMIT transfer
+    ├── 02_rollback_and_savepoint.sql    # Full ROLLBACK & SAVEPOINT partial rollback
+    ├── 03_partial_failure_simulation.sql# Simulated invalid transfer & atomicity rollback
+    ├── 04_isolation_levels_and_concurrency.sql # Isolation levels & 2-session anomaly
+    └── complete_experiment8.sql         # Unified executable all-in-one script
 ```
 
 ---
@@ -2592,4 +2599,364 @@ Empty set (0.00 sec)
 ## 📈 Experiment 7 Results & Conclusion
 
 The denormalized student course registration schema was successfully normalized step-by-step from **UNF** to **1NF**, **2NF**, **3NF**, and **BCNF**. Partial functional dependencies were eliminated by isolating `Students` and `Courses`, while transitive dependencies were resolved by extracting `Instructors`. The relational decomposition was formally verified via SQL to be both **lossless** (exact table reconstruction with zero spurious rows) and **dependency preserving** (all functional dependencies enforced within individual relations).
+
+---
+
+# 🔬 Experiment 8: Banking Transactions, ACID Properties, Savepoints and Concurrency Control
+
+[![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Database](https://img.shields.io/badge/Database-BankingDB-005C84?style=for-the-badge&logo=databricks&logoColor=white)](https://github.com/)
+
+---
+
+## 📌 Aim & Objectives
+
+To design and implement a transactional banking database application demonstrating:
+1. **Transaction Control Language (TCL):** `START TRANSACTION` (`BEGIN`), `COMMIT`, and full `ROLLBACK`.
+2. **Intermediate Checkpoints:** Using `SAVEPOINT` and `ROLLBACK TO SAVEPOINT` to handle partial failures gracefully without aborting the entire transaction.
+3. **Partial Failure Simulation:** Ensuring all-or-nothing execution (Atomicity) when funds transfer operations encounter unexpected failures or invalid accounts.
+4. **Transaction Isolation Levels:** Configuring `READ COMMITTED`, `REPEATABLE READ`, and `SERIALIZABLE` in MySQL InnoDB.
+5. **Multi-Session Concurrency Control:** Demonstrating concurrency phenomena (Non-Repeatable Read) across two simultaneous database client sessions.
+
+---
+
+## 📖 Theory & Core Concepts
+
+A **Database Transaction** is a logical unit of database processing that includes one or more database access operations.
+
+### 1. ACID Properties
+- **Atomicity (All-or-Nothing):** Either all operations of a transaction succeed and are committed to disk, or none take effect. In banking, debiting account $A$ without crediting account $B$ is strictly prohibited.
+- **Consistency:** Transactions transition the database from one valid state to another valid state, preserving all integrity constraints (e.g., account balance constraints).
+- **Isolation:** Concurrent transactions execute without mutual interference. Intermediate uncommitted changes made by one transaction remain invisible to concurrent transactions.
+- **Durability:** Once committed, changes are permanently written to non-volatile storage (WAL / InnoDB redo logs) and will not be lost even in the event of an immediate system crash or power outage.
+
+### 2. Transaction Control Statements
+- `START TRANSACTION` / `BEGIN`: Marks the boundary start of a logical unit of work.
+- `COMMIT`: Persists all modifications made in the current transaction permanently to the database.
+- `ROLLBACK`: Discards all modifications made since the start of the transaction, restoring data to its pre-transaction state.
+- `SAVEPOINT <name>`: Establishes a named checkpoint within a transaction.
+- `ROLLBACK TO SAVEPOINT <name>`: Undoes only those operations executed after the named savepoint, keeping preceding operations intact and uncommitted.
+
+### 3. Concurrency Anomalies & ANSI SQL Isolation Levels
+When multiple transactions execute concurrently without proper isolation, several anomalies can arise:
+1. **Dirty Read:** A transaction reads uncommitted modifications made by another transaction (prevented in `READ COMMITTED` and higher).
+2. **Non-Repeatable Read:** A transaction re-reads a row and finds that values have been modified by another committed transaction (prevented in `REPEATABLE READ` and `SERIALIZABLE`).
+3. **Phantom Read:** A transaction re-executes a range query and finds new rows added by another committed transaction (prevented in `SERIALIZABLE` or InnoDB Next-Key Locks).
+
+| Isolation Level | Dirty Read | Non-Repeatable Read | Phantom Read |
+| :--- | :---: | :---: | :---: |
+| **`READ UNCOMMITTED`** | Permitted | Permitted | Permitted |
+| **`READ COMMITTED`** | ❌ Prevented | Permitted | Permitted |
+| **`REPEATABLE READ`** (InnoDB Default) | ❌ Prevented | ❌ Prevented | ❌ Prevented (via MVCC & Next-Key Locks) |
+| **`SERIALIZABLE`** | ❌ Prevented | ❌ Prevented | ❌ Prevented |
+
+---
+
+## 📁 Experiment 8 Files
+
+```tree
+Experiment-8/
+├── 01_banking_schema_and_commit.sql        # Accounts DDL & atomic BEGIN/COMMIT transfer
+├── 02_rollback_and_savepoint.sql           # Full ROLLBACK & SAVEPOINT partial rollback
+├── 03_partial_failure_simulation.sql       # Invalid account transfer failure & atomicity test
+├── 04_isolation_levels_and_concurrency.sql # Isolation level syntax & 2-session concurrency test
+└── complete_experiment8.sql                # Unified executable script for entire Experiment 8
+```
+
+---
+
+## 🚀 Getting Started / Execution Guide (Experiment 8)
+
+### Method 1: Using MySQL Command Line Client
+
+1. Open your terminal in the repository root directory.
+2. Log into MySQL:
+   ```bash
+   mysql -u root -p
+   ```
+3. Run the complete unified script:
+   ```sql
+   SOURCE Experiment-8/complete_experiment8.sql;
+   ```
+   *Or execute step-by-step:*
+   ```sql
+   SOURCE Experiment-8/01_banking_schema_and_commit.sql;
+   SOURCE Experiment-8/02_rollback_and_savepoint.sql;
+   SOURCE Experiment-8/03_partial_failure_simulation.sql;
+   SOURCE Experiment-8/04_isolation_levels_and_concurrency.sql;
+   ```
+
+### Method 2: Testing Multi-Session Concurrency in Two Terminals
+
+1. **Terminal 1 (Session 1):**
+   ```bash
+   mysql -u root -p BankingDB
+   ```
+   ```sql
+   SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+   START TRANSACTION;
+   SELECT Balance FROM Accounts WHERE Account_ID = 101;
+   ```
+2. **Terminal 2 (Session 2):**
+   ```bash
+   mysql -u root -p BankingDB
+   ```
+   ```sql
+   START TRANSACTION;
+   UPDATE Accounts SET Balance = Balance - 500 WHERE Account_ID = 101;
+   COMMIT;
+   ```
+3. **Terminal 1 (Session 1 - Verification):**
+   ```sql
+   SELECT Balance FROM Accounts WHERE Account_ID = 101;
+   COMMIT;
+   ```
+
+---
+
+## 📊 Step-by-Step Transaction Implementations
+
+### 1. Database Creation & Initial Table Setup
+```sql
+CREATE DATABASE IF NOT EXISTS BankingDB;
+USE BankingDB;
+
+CREATE TABLE Accounts (
+    Account_ID INT PRIMARY KEY,
+    Holder_Name VARCHAR(50) NOT NULL,
+    Balance DECIMAL(10, 2) NOT NULL
+);
+
+INSERT INTO Accounts VALUES
+(101, 'Amit', 10000.00),
+(102, 'Rahul', 8000.00);
+
+SELECT * FROM Accounts;
+```
+
+---
+
+### 2. Successful Transaction (`START TRANSACTION` & `COMMIT`)
+Transfer ₹2000 from Amit (Account 101) to Rahul (Account 102):
+```sql
+START TRANSACTION;
+
+UPDATE Accounts
+SET Balance = Balance - 2000
+WHERE Account_ID = 101;
+
+UPDATE Accounts
+SET Balance = Balance + 2000
+WHERE Account_ID = 102;
+
+COMMIT;
+
+SELECT * FROM Accounts;
+```
+
+---
+
+### 3. Full Transaction Abort (`ROLLBACK`)
+Attempting a ₹5000 withdrawal from Amit that is subsequently cancelled:
+```sql
+START TRANSACTION;
+
+UPDATE Accounts
+SET Balance = Balance - 5000
+WHERE Account_ID = 101;
+
+ROLLBACK;
+
+SELECT * FROM Accounts;
+```
+
+---
+
+### 4. Intermediate Checkpoints (`SAVEPOINT` & Partial Rollback)
+Deduct ₹1000 from Amit, establish savepoint `sp1`, attempt an erroneous ₹20,000 deduction on Rahul, and rollback specifically to `sp1`:
+```sql
+START TRANSACTION;
+
+UPDATE Accounts
+SET Balance = Balance - 1000
+WHERE Account_ID = 101;
+
+SAVEPOINT sp1;
+
+UPDATE Accounts
+SET Balance = Balance - 20000
+WHERE Account_ID = 102;
+
+ROLLBACK TO SAVEPOINT sp1;
+
+COMMIT;
+
+SELECT * FROM Accounts;
+```
+
+---
+
+### 5. Partial Failure Simulation
+Simulating an atomic transfer where debit succeeds on Account 101, but the credit target (Account 999) does not exist:
+```sql
+START TRANSACTION;
+
+UPDATE Accounts
+SET Balance = Balance - 500
+WHERE Account_ID = 101;
+
+-- Simulated failure: target account does not exist
+UPDATE Accounts
+SET Balance = Balance + 500
+WHERE Account_ID = 999;
+
+ROLLBACK;
+
+SELECT * FROM Accounts;
+```
+
+---
+
+### 6. Isolation Levels Configuration
+```sql
+-- Read Committed
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+START TRANSACTION;
+SELECT * FROM Accounts;
+COMMIT;
+
+-- Repeatable Read (Default)
+SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+START TRANSACTION;
+SELECT * FROM Accounts;
+COMMIT;
+
+-- Serializable
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+START TRANSACTION;
+SELECT * FROM Accounts;
+COMMIT;
+```
+
+---
+
+### 7. Concurrency Anomaly (Two Sessions)
+```sql
+-- SESSION 1
+START TRANSACTION;
+SELECT Balance FROM Accounts WHERE Account_ID = 101;
+
+-- SESSION 2 (Concurrent Update & Commit)
+START TRANSACTION;
+UPDATE Accounts SET Balance = Balance - 500 WHERE Account_ID = 101;
+COMMIT;
+
+-- SESSION 1 (Re-querying same row)
+SELECT Balance FROM Accounts WHERE Account_ID = 101;
+COMMIT;
+```
+
+---
+
+## 📋 Expected Outputs & Execution Verification
+
+### 1. Initial Account Table
+```
++------------+-------------+----------+
+| Account_ID | Holder_Name | Balance  |
++------------+-------------+----------+
+|        101 | Amit        | 10000.00 |
+|        102 | Rahul       |  8000.00 |
++------------+-------------+----------+
+```
+
+### 2. State After BEGIN and COMMIT (₹2000 Transfer)
+```
++------------+-------------+----------+
+| Account_ID | Holder_Name | Balance  |
++------------+-------------+----------+
+|        101 | Amit        |  8000.00 |
+|        102 | Rahul       | 10000.00 |
++------------+-------------+----------+
+```
+*(Amit debited ₹2000, Rahul credited ₹2000; total bank balance preserved at ₹18,000).*
+
+### 3. State After ROLLBACK (Aborted ₹5000 Debit)
+```
++------------+-------------+----------+
+| Account_ID | Holder_Name | Balance  |
++------------+-------------+----------+
+|        101 | Amit        |  8000.00 |
+|        102 | Rahul       | 10000.00 |
++------------+-------------+----------+
+```
+*(All uncommitted modifications rolled back; balances remain unchanged).*
+
+### 4. State After SAVEPOINT and Partial Rollback
+```
++------------+-------------+----------+
+| Account_ID | Holder_Name | Balance  |
++------------+-------------+----------+
+|        101 | Amit        |  7000.00 |
+|        102 | Rahul       | 10000.00 |
++------------+-------------+----------+
+```
+*(Amit's valid ₹1000 debit committed; Rahul's excessive ₹20,000 debit reverted back to savepoint `sp1`).*
+
+### 5. State After Partial Failure Simulation
+```
++------------+-------------+----------+
+| Account_ID | Holder_Name | Balance  |
++------------+-------------+----------+
+|        101 | Amit        |  7000.00 |
+|        102 | Rahul       | 10000.00 |
++------------+-------------+----------+
+```
+*(Because target account 999 failed, the entire transaction rolled back; Amit's ₹500 was not deducted).*
+
+### 6. State After Isolation Level Check
+```
++------------+-------------+----------+
+| Account_ID | Holder_Name | Balance  |
++------------+-------------+----------+
+|        101 | Amit        |  7000.00 |
+|        102 | Rahul       | 10000.00 |
++------------+-------------+----------+
+```
+
+### 7. State After Concurrency Anomaly (Session 2 Debit of ₹500)
+```
++------------+-------------+----------+
+| Account_ID | Holder_Name | Balance  |
++------------+-------------+----------+
+|        101 | Amit        |  6500.00 |
+|        102 | Rahul       | 10000.00 |
++------------+-------------+----------+
+```
+
+### 8. Final Account State
+```
++------------+-------------+----------+
+| Account_ID | Holder_Name | Balance  |
++------------+-------------+----------+
+|        101 | Amit        |  6500.00 |
+|        102 | Rahul       | 10000.00 |
++------------+-------------+----------+
+```
+
+---
+
+## 💡 Important Observations
+
+- **ACID Compliance in Banking:** Transaction boundaries (`START TRANSACTION` ... `COMMIT`) guarantee that intermediate monetary debits are never left dangling without corresponding credits.
+- **Savepoints Prevent Total Aborts:** When processing multi-stage complex workflows, `SAVEPOINT` provides checkpoint isolation, enabling retry or recovery logic for subsequent steps without wasting already-validated preceding work.
+- **Failure Resilience:** The partial failure simulation demonstrates why programmatic transaction wrappers are mandatory in financial software to prevent lost money during network or logical exceptions.
+- **MVCC & Isolation Trade-offs:** MySQL InnoDB uses Multi-Version Concurrency Control (MVCC). Under `REPEATABLE READ`, readers do not lock writers and writers do not lock readers, providing consistent read snapshots while preserving high throughput.
+
+---
+
+## 📈 Experiment 8 Results & Conclusion
+
+Banking transactions adhering to ACID properties were successfully implemented and verified. Atomic balance transfers were committed using `START TRANSACTION` and `COMMIT`, and invalid operations were rolled back using `ROLLBACK`. The use of `SAVEPOINT` permitted selective partial rollbacks without abandoning preceding valid work. Transaction isolation levels (`READ COMMITTED`, `REPEATABLE READ`, and `SERIALIZABLE`) were configured, and concurrent execution behavior across multiple database sessions was demonstrated and validated.
+
 
